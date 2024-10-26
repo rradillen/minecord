@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.1.0+1.21.3](https://github.com/rradillen/minecord/compare/v2.1.0+1.21...v2.1.0+1.21.3) (2024-10-26)
+
+
+### Miscellaneous Chores
+
+* release 2.1.0+1.21.3 ([ce82fb2](https://github.com/rradillen/minecord/commit/ce82fb2284c8bd7c894c46b678caeefb2092a635))
+
 ## [2.1.0+1.21](https://github.com/rradillen/minecord/compare/v2.1.0+1.21.3...v2.1.0+1.21) (2024-10-26)
 
 
