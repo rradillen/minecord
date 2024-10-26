@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.1.2+1.21.3](https://github.com/rradillen/minecord/compare/v2.1.1+1.21.3...v2.1.2+1.21.3) (2024-10-26)
+
+
+### bump
+
+* fabric_tailor ([3b1c67d](https://github.com/rradillen/minecord/commit/3b1c67d3857e8b264b5346c5a4517fb70f184fd6))
+
 ## [2.1.1+1.21.3](https://github.com/rradillen/minecord/compare/v2.1.0+1.21.3...v2.1.1+1.21.3) (2024-10-26)
 
 
