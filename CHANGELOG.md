@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.1.3+1.21.3](https://github.com/rradillen/minecord/compare/v2.1.2+1.21.3...v2.1.3+1.21.3) (2024-10-26)
+
+
+### bump
+
+* place_holder_api ([f3e8267](https://github.com/rradillen/minecord/commit/f3e826769e5030fa266ea2615bdcaaa7fcbca6c0))
+
 ## [2.1.2+1.21.3](https://github.com/rradillen/minecord/compare/v2.1.1+1.21.3...v2.1.2+1.21.3) (2024-10-26)
 
 
