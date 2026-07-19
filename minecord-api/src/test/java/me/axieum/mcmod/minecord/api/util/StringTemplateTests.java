@@ -10,6 +10,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @DisplayName("String Template")
 public class StringTemplateTests
@@ -156,5 +158,99 @@ public class StringTemplateTests
             "hi, jyne doe!",
             st.format("Hi, ${name}!")
         );
+    }
+
+    @Test
+    @DisplayName("Return null and blank templates unchanged")
+    public void nullAndBlankTemplates()
+    {
+        st.add("name", "John Doe");
+        assertNull(st.format(null));
+        assertEquals("", st.format(""));
+        assertEquals("   ", st.format("   "));
+    }
+
+    @Test
+    @DisplayName("Leave absent variables untouched")
+    public void absentVariables()
+    {
+        st.add("name", "John Doe");
+        // A token whose name is not known is left verbatim
+        assertEquals("Hi, ${missing}!", st.format("Hi, ${missing}!"));
+        // Known and unknown tokens can coexist
+        assertEquals("John Doe (${missing})", st.format("${name} (${missing})"));
+    }
+
+    @Test
+    @DisplayName("Replace present null variables with an empty string")
+    public void presentNullVariables()
+    {
+        st.add("name", null);
+        // Unlike an absent variable, a known but null variable resolves to an empty string
+        assertEquals("Hi, !", st.format("Hi, ${name}!"));
+    }
+
+    @Test
+    @DisplayName("Resolve null lazy variables")
+    public void nullLazyVariables()
+    {
+        st.add("name", () -> null);
+        assertEquals("Hi, !", st.format("Hi, ${name}!"));
+        assertEquals("Hi, Jane Doe!", st.format("Hi, ${name:-Jane Doe}!"));
+    }
+
+    @Test
+    @DisplayName("Use custom variable prefixes and suffixes")
+    public void customPrefixAndSuffix()
+    {
+        st.setPrefix("{{").setSuffix("}}").add("name", "John Doe");
+        assertEquals("Hi, John Doe!", st.format("Hi, {{name}}!"));
+        // The default delimiters are no longer recognised
+        assertEquals("Hi, ${name}!", st.format("Hi, ${name}!"));
+    }
+
+    @Test
+    @DisplayName("Remove variables")
+    public void removeVariables()
+    {
+        st.add("name", "John Doe");
+        assertEquals("Hi, John Doe!", st.format("Hi, ${name}!"));
+        st.remove("name");
+        assertNull(st.get("name"));
+        // Once removed, the variable is treated as absent and left verbatim
+        assertEquals("Hi, ${name}!", st.format("Hi, ${name}!"));
+    }
+
+    @Test
+    @DisplayName("Leave unsupported formatted variables untouched")
+    public void unsupportedFormattedVariables()
+    {
+        // A format may only be applied to strings, numbers, temporals and durations
+        st.add("obj", new Object());
+        assertDoesNotThrow(
+            () -> assertEquals("Value: ${obj:%.2f}", st.format("Value: ${obj:%.2f}")),
+            "Exceptions raised when formatting unsupported variable types should be caught"
+        );
+    }
+
+    @Test
+    @DisplayName("Expose variables and transforms")
+    public void accessors()
+    {
+        st.add("name", "John Doe");
+        assertEquals("John Doe", st.get("name"));
+        assertTrue(st.getVariables().containsKey("name"));
+        assertTrue(st.getTransforms().isEmpty());
+        st.transform(String::toLowerCase);
+        assertEquals(1, st.getTransforms().size());
+    }
+
+    @Test
+    @DisplayName("Replace repeated and adjacent variables")
+    public void repeatedAndAdjacentVariables()
+    {
+        st.add("a", "X").add("b", "Y");
+        assertEquals("XX", st.format("${a}${a}"));
+        assertEquals("X-Y", st.format("${a}-${b}"));
     }
 }
