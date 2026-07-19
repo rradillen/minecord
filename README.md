@@ -21,7 +21,7 @@ built on the [Fabric][fabric] mod loader, and is available for modern versions
 of [Minecraft][minecraft] Java Edition.
 
 > [!TIP]
-> You only need to add the one mod jar to your server, e.g. `minecord-2.1.2+26.2.jar`.
+> You only need to add the one mod jar to your server, e.g. `minecord-2.0.3+1.20.6.jar`.
 
 #### Integrations
 
