@@ -56,6 +56,23 @@ public class StringUtilsTests
                 StringUtils.discordToMinecraft("This is §agreen§r text!")
             );
         }
+
+        @Test
+        @DisplayName("Leave plain text unchanged")
+        public void plainText()
+        {
+            assertEquals(
+                "Hello, world!",
+                StringUtils.discordToMinecraft("Hello, world!")
+            );
+        }
+
+        @Test
+        @DisplayName("Handle empty input")
+        public void empty()
+        {
+            assertEquals("", StringUtils.discordToMinecraft(""));
+        }
     }
 
     @Nested
@@ -85,6 +102,73 @@ public class StringUtilsTests
                 StringUtils.minecraftToDiscord("This is §agreen§r text!")
             );
         }
+
+        @Test
+        @DisplayName("Translate bold formatting")
+        public void bold()
+        {
+            assertEquals(
+                "This is **bold** text!",
+                StringUtils.minecraftToDiscord("This is §lbold§r text!")
+            );
+        }
+
+        @Test
+        @DisplayName("Translate underline formatting")
+        public void underline()
+        {
+            assertEquals(
+                "This is __underlined__ text!",
+                StringUtils.minecraftToDiscord("This is §nunderlined§r text!")
+            );
+        }
+
+        @Test
+        @DisplayName("Translate italic formatting")
+        public void italics()
+        {
+            assertEquals(
+                "This is _italic_ text!",
+                StringUtils.minecraftToDiscord("This is §oitalic§r text!")
+            );
+        }
+
+        @Test
+        @DisplayName("Translate strikethrough formatting")
+        public void strikethrough()
+        {
+            assertEquals(
+                "This is ~~struck~~ text!",
+                StringUtils.minecraftToDiscord("This is §mstruck§r text!")
+            );
+        }
+
+        @Test
+        @DisplayName("Obfuscate spoiler formatting")
+        public void spoilers()
+        {
+            assertEquals(
+                "This is ||hidden|| text!",
+                StringUtils.minecraftToDiscord("This is §khidden§r text!")
+            );
+        }
+
+        @Test
+        @DisplayName("Collapse consecutive line breaks")
+        public void collapseLineBreaks()
+        {
+            assertEquals(
+                "line one line two",
+                StringUtils.minecraftToDiscord("line one\n\nline two")
+            );
+        }
+
+        @Test
+        @DisplayName("Handle empty input")
+        public void empty()
+        {
+            assertEquals("", StringUtils.minecraftToDiscord(""));
+        }
     }
 
     @Test
@@ -99,5 +183,46 @@ public class StringUtilsTests
             "Deep Dark",
             StringUtils.deriveWorldName(Identifier.of("extrautils", "the_deep_dark"))
         );
+    }
+
+    @Nested
+    @DisplayName("Derive World Name from identifier path")
+    public class DeriveWorldNameFromPath
+    {
+        @Test
+        @DisplayName("Capitalise a single word")
+        public void singleWord()
+        {
+            assertEquals("Overworld", StringUtils.deriveWorldName("overworld"));
+        }
+
+        @Test
+        @DisplayName("Replace underscores and capitalise each word")
+        public void underscoreDelimited()
+        {
+            assertEquals("Deep Dark", StringUtils.deriveWorldName("deep_dark"));
+        }
+
+        @Test
+        @DisplayName("Strip a leading 'the' keyword")
+        public void stripsLeadingThe()
+        {
+            assertEquals("Nether", StringUtils.deriveWorldName("the_nether"));
+            assertEquals("Deep Dark", StringUtils.deriveWorldName("the_deep_dark"));
+        }
+
+        @Test
+        @DisplayName("Strip only the first 'the ' occurrence")
+        public void stripsFirstTheOnly()
+        {
+            assertEquals("End Of World", StringUtils.deriveWorldName("end_of_the_world"));
+        }
+
+        @Test
+        @DisplayName("Handle empty input")
+        public void empty()
+        {
+            assertEquals("", StringUtils.deriveWorldName(""));
+        }
     }
 }

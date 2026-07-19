@@ -155,25 +155,39 @@ public final class StringUtils
      *
      * @param identifier Minecraft world identifier
      * @return derived name of the given world identifier
+     * @see #deriveWorldName(String)
      */
     public static String deriveWorldName(final Identifier identifier)
     {
-        return WORLD_NAMES.computeIfAbsent(identifier, id -> {
-            // Space delimited identifier path, with leading 'the' keywords removed
-            final String path = id.getPath().replace('_', ' ').replaceFirst("(?i)the\\s", "");
-            // Capitalise the first character in each word
-            char[] chars = path.toCharArray();
-            boolean capitalizeNext = true;
-            for (int i = 0; i < chars.length; i++) {
-                if (chars[i] == ' ') {
-                    capitalizeNext = true;
-                } else if (capitalizeNext) {
-                    chars[i] = Character.toTitleCase(chars[i]);
-                    capitalizeNext = false;
-                }
+        return WORLD_NAMES.computeIfAbsent(identifier, id -> deriveWorldName(id.getPath()));
+    }
+
+    /**
+     * Derives a human-readable world name from a world identifier path.
+     *
+     * <p>This is the mapping-agnostic core of {@link #deriveWorldName(Identifier)}: it operates
+     * purely on the identifier path string (e.g. {@code "the_nether"}), and hence carries no
+     * dependency on Minecraft mapping types, so it can be exercised in isolation.
+     *
+     * @param path Minecraft world identifier path, e.g. {@code "the_nether"}
+     * @return derived name of the given world identifier path, e.g. {@code "Nether"}
+     */
+    public static String deriveWorldName(final String path)
+    {
+        // Space delimited identifier path, with leading 'the' keywords removed
+        final String name = path.replace('_', ' ').replaceFirst("(?i)the\\s", "");
+        // Capitalise the first character in each word
+        char[] chars = name.toCharArray();
+        boolean capitalizeNext = true;
+        for (int i = 0; i < chars.length; i++) {
+            if (chars[i] == ' ') {
+                capitalizeNext = true;
+            } else if (capitalizeNext) {
+                chars[i] = Character.toTitleCase(chars[i]);
+                capitalizeNext = false;
             }
-            // Return the computed world name
-            return new String(chars);
-        });
+        }
+        // Return the computed world name
+        return new String(chars);
     }
 }
