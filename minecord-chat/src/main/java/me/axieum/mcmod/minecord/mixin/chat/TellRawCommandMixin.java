@@ -21,6 +21,7 @@ import net.minecraft.server.command.TellRawCommand;
 import net.minecraft.server.network.ServerPlayerEntity;
 
 import me.axieum.mcmod.minecord.api.chat.event.minecraft.TellRawMessageCallback;
+import me.axieum.mcmod.minecord.impl.chat.util.TellRawSelectors;
 
 /**
  * Injects into, and broadcasts any '/tellraw' command invocations.
@@ -89,8 +90,9 @@ public abstract class TellRawCommandMixin
     @Unique
     private static boolean targetsAllPlayers(CommandContext<ServerCommandSource> context)
     {
-        return context.getNodes().size() > 1 && context.getNodes().get(1).getRange().get(context.getInput()).equals(
-            "" + EntitySelectorReader.SELECTOR_PREFIX + 'a' // see private `EntitySelectorReader#ALL_PLAYERS` for 'a'
+        return context.getNodes().size() > 1 && TellRawSelectors.isAllPlayersSelector(
+            context.getNodes().get(1).getRange().get(context.getInput()),
+            EntitySelectorReader.SELECTOR_PREFIX // see private `EntitySelectorReader#ALL_PLAYERS` for 'a'
         );
     }
 }
