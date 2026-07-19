@@ -5,9 +5,9 @@ import java.util.Map;
 import eu.pb4.placeholders.api.PlaceholderContext;
 import eu.pb4.placeholders.api.PlaceholderHandler;
 
-import net.minecraft.advancement.Advancement;
-import net.minecraft.advancement.AdvancementDisplay;
-import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.advancements.Advancement;
+import net.minecraft.advancements.DisplayInfo;
+import net.minecraft.server.level.ServerPlayer;
 
 import me.axieum.mcmod.minecord.api.Minecord;
 import me.axieum.mcmod.minecord.api.chat.event.minecraft.GrantCriterionCallback;
@@ -21,11 +21,11 @@ import static me.axieum.mcmod.minecord.api.util.PlaceholdersExt.string;
 public class PlayerAdvancementCallback implements GrantCriterionCallback
 {
     @Override
-    public void onGrantCriterion(ServerPlayerEntity player, Advancement advancement, String criterion)
+    public void onGrantCriterion(ServerPlayer player, Advancement advancement, String criterion)
     {
         Minecord.getInstance().getJDA().ifPresent(jda -> {
             // Only listen for advancements that should be announced
-            final AdvancementDisplay info = advancement.display().orElse(null);
+            final DisplayInfo info = advancement.display().orElse(null);
             if (info == null || !info.shouldAnnounceToChat()) return;
 
             /*

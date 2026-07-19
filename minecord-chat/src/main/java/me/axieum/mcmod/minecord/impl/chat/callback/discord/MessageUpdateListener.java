@@ -16,7 +16,7 @@ import net.dv8tion.jda.api.events.message.MessageUpdateEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import org.jetbrains.annotations.Nullable;
 
-import net.minecraft.util.Formatting;
+import net.minecraft.ChatFormatting;
 
 import me.axieum.mcmod.minecord.api.util.PlaceholdersExt;
 import me.axieum.mcmod.minecord.impl.chat.util.MinecraftDispatcher;
@@ -38,8 +38,8 @@ public class MessageUpdateListener extends ListenerAdapter
         .showInlineDiffs(true)
         .mergeOriginalRevised(true)
         .inlineDiffByWord(true)
-        .oldTag(f -> f ? Formatting.RED + "~~" : "~~" + Formatting.RESET)
-        .newTag(f -> (f ? Formatting.GREEN : Formatting.RESET).toString())
+        .oldTag(f -> f ? ChatFormatting.RED + "~~" : "~~" + ChatFormatting.RESET)
+        .newTag(f -> (f ? ChatFormatting.GREEN : ChatFormatting.RESET).toString())
         .build();
 
     @Override

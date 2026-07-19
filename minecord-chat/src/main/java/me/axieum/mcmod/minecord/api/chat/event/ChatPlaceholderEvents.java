@@ -9,17 +9,17 @@ import net.dv8tion.jda.api.events.message.MessageUpdateEvent;
 import net.dv8tion.jda.api.events.message.react.GenericMessageReactionEvent;
 import org.jetbrains.annotations.Nullable;
 
-import net.minecraft.advancement.Advancement;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.damage.DamageSource;
-import net.minecraft.network.message.MessageType;
-import net.minecraft.network.message.SignedMessage;
+import net.minecraft.advancements.Advancement;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.network.chat.ChatType;
+import net.minecraft.network.chat.PlayerChatMessage;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.text.Text;
-import net.minecraft.util.crash.CrashReport;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.network.chat.Component;
+import net.minecraft.CrashReport;
 
 import net.fabricmc.fabric.api.event.Event;
 import net.fabricmc.fabric.api.event.EventFactory;
@@ -386,7 +386,7 @@ public final class ChatPlaceholderEvents
              * @param template mutable string template
              * @param player   player who logged in
              */
-            void onPlayerConnectPlaceholder(StringTemplate template, ServerPlayerEntity player);
+            void onPlayerConnectPlaceholder(StringTemplate template, ServerPlayer player);
         }
 
         /** A callback for when a player left the game. */
@@ -399,7 +399,7 @@ public final class ChatPlaceholderEvents
              * @param template mutable string template
              * @param player   player who logged out
              */
-            void onPlayerDisconnectPlaceholder(StringTemplate template, ServerPlayerEntity player);
+            void onPlayerDisconnectPlaceholder(StringTemplate template, ServerPlayer player);
         }
 
         /** A callback for when a player sent an in-game chat message. */
@@ -416,7 +416,7 @@ public final class ChatPlaceholderEvents
              * @see net.fabricmc.fabric.api.message.v1.ServerMessageEvents#CHAT_MESSAGE
              */
             void onPlayerChatPlaceholder(
-                StringTemplate template, ServerPlayerEntity player, SignedMessage message, MessageType.Parameters params
+                StringTemplate template, ServerPlayer player, PlayerChatMessage message, ChatType.Parameters params
             );
         }
 
@@ -433,7 +433,7 @@ public final class ChatPlaceholderEvents
              * @param criterion   name of the criterion granted
              */
             void onPlayerAdvancementPlaceholder(
-                StringTemplate template, ServerPlayerEntity player, Advancement advancement, String criterion
+                StringTemplate template, ServerPlayer player, Advancement advancement, String criterion
             );
         }
 
@@ -450,7 +450,7 @@ public final class ChatPlaceholderEvents
              * @param destination target world
              */
             void onPlayerChangeWorldPlaceholder(
-                StringTemplate template, ServerPlayerEntity player, ServerWorld origin, ServerWorld destination
+                StringTemplate template, ServerPlayer player, ServerLevel origin, ServerLevel destination
             );
         }
 
@@ -465,7 +465,7 @@ public final class ChatPlaceholderEvents
              * @param player   victim player
              * @param source   damage source
              */
-            void onPlayerDeathPlaceholder(StringTemplate template, ServerPlayerEntity player, DamageSource source);
+            void onPlayerDeathPlaceholder(StringTemplate template, ServerPlayer player, DamageSource source);
         }
 
         /**
@@ -483,11 +483,11 @@ public final class ChatPlaceholderEvents
              * @param source   source of the command, e.g. a player
              * @param action   received message contents
              * @param params   received message parameters
-             * @see net.minecraft.network.message.MessageType#EMOTE_COMMAND
+             * @see net.minecraft.network.message.ChatType#EMOTE_COMMAND
              * @see net.fabricmc.fabric.api.message.v1.ServerMessageEvents#COMMAND_MESSAGE
              */
             void onEmoteCommandPlaceholder(
-                StringTemplate template, ServerCommandSource source, SignedMessage action, MessageType.Parameters params
+                StringTemplate template, CommandSourceStack source, PlayerChatMessage action, ChatType.Parameters params
             );
         }
 
@@ -506,11 +506,11 @@ public final class ChatPlaceholderEvents
              * @param source   source of the message, e.g. a player
              * @param action   received message contents
              * @param params   received message parameters
-             * @see net.minecraft.network.message.MessageType#SAY_COMMAND
+             * @see net.minecraft.network.message.ChatType#SAY_COMMAND
              * @see net.fabricmc.fabric.api.message.v1.ServerMessageEvents#COMMAND_MESSAGE
              */
             void onSayCommandPlaceholder(
-                StringTemplate template, ServerCommandSource source, SignedMessage action, MessageType.Parameters params
+                StringTemplate template, CommandSourceStack source, PlayerChatMessage action, ChatType.Parameters params
             );
         }
 
@@ -529,7 +529,7 @@ public final class ChatPlaceholderEvents
              * @param source   source of the message, e.g. a player
              * @param message  received message contents
              */
-            void onTellRawCommandPlaceholder(StringTemplate template, ServerCommandSource source, Text message);
+            void onTellRawCommandPlaceholder(StringTemplate template, CommandSourceStack source, Component message);
         }
     }
 }

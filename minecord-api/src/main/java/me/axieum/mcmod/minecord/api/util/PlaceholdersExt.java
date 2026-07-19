@@ -22,7 +22,7 @@ import org.apache.commons.lang3.time.DurationFormatUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import net.minecraft.text.Text;
+import net.minecraft.network.chat.Component;
 
 import me.axieum.mcmod.minecord.api.Minecord;
 
@@ -58,7 +58,7 @@ public final class PlaceholdersExt
     }
 
     /*
-     * Text-output placeholder parsers.
+     * Component-output placeholder parsers.
      */
 
     /**
@@ -69,7 +69,7 @@ public final class PlaceholdersExt
      * @param placeholders mapping of placeholder key-value pairs
      * @return formatted Minecraft text
      */
-    public static Text parseText(
+    public static Component parseText(
         @NotNull TextNode node,
         @Nullable PlaceholderContext context,
         @NotNull Map<String, PlaceholderHandler> placeholders
@@ -86,7 +86,7 @@ public final class PlaceholdersExt
      * @param placeholderGetter function that takes placeholder key and returns value
      * @return formatted Minecraft text
      */
-    public static Text parseText(
+    public static Component parseText(
         @NotNull TextNode node,
         @Nullable PlaceholderContext context,
         @NotNull PlaceholderGetter placeholderGetter
@@ -103,7 +103,7 @@ public final class PlaceholdersExt
      * @param text placeholder template text
      * @return parsed placeholder text node
      */
-    public static @NotNull TextNode parseNode(@Nullable Text text)
+    public static @NotNull TextNode parseNode(@Nullable Component text)
     {
         return text != null ? new ParentNode(NODE_PARSER.parseNodes(TextNode.convert(text))) : EmptyNode.INSTANCE;
     }
@@ -207,25 +207,25 @@ public final class PlaceholdersExt
     }
 
     /**
-     * Returns a {@link Text} placeholder handler.
+     * Returns a {@link Component} placeholder handler.
      *
      * @param text Minecraft text
      * @return text placeholder handler
      */
-    public static PlaceholderHandler text(final Text text)
+    public static PlaceholderHandler text(final Component text)
     {
         return (ctx, arg) -> PlaceholderResult.value(text);
     }
 
     /**
-     * Returns a {@link Text} markdown placeholder handler.
+     * Returns a {@link Component} markdown placeholder handler.
      *
      * @param markdown markdown string
      * @return markdown placeholder handler
      */
     public static PlaceholderHandler markdown(final String markdown)
     {
-        final Text markdownText = MarkdownLiteParserV1.ALL.parseText(markdown, ParserContext.of());
+        final Component markdownText = MarkdownLiteParserV1.ALL.parseText(markdown, ParserContext.of());
         return (ctx, arg) -> PlaceholderResult.value(markdownText);
     }
 

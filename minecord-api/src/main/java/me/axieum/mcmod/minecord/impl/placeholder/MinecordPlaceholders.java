@@ -3,7 +3,7 @@ package me.axieum.mcmod.minecord.impl.placeholder;
 import eu.pb4.placeholders.api.PlaceholderResult;
 import eu.pb4.placeholders.api.Placeholders;
 
-import net.minecraft.util.Identifier;
+import net.minecraft.resources.Identifier;
 
 import me.axieum.mcmod.minecord.api.util.StringUtils;
 import static me.axieum.mcmod.minecord.impl.MinecordImpl.getConfig;
@@ -21,7 +21,7 @@ public final class MinecordPlaceholders
     public static void register()
     {
         // minecord:player (or server)
-        Placeholders.register(Identifier.of("minecord", "player"), (ctx, arg) ->
+        Placeholders.register(Identifier.fromNamespaceAndPath("minecord", "player"), (ctx, arg) ->
             PlaceholderResult.value(
                 ctx.player() != null
                     ? ctx.player().getDisplayName().getString()
@@ -29,7 +29,7 @@ public final class MinecordPlaceholders
             )
         );
         // minecord:world
-        Placeholders.register(Identifier.of("minecord", "world"), (ctx, arg) ->
+        Placeholders.register(Identifier.fromNamespaceAndPath("minecord", "world"), (ctx, arg) ->
             PlaceholderResult.value(ctx.world() != null ? StringUtils.getWorldName(ctx.world()) : "∞")
         );
     }

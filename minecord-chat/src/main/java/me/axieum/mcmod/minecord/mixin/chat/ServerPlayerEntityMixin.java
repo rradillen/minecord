@@ -5,15 +5,15 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import net.minecraft.entity.damage.DamageSource;
-import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.server.level.ServerPlayer;
 
 import me.axieum.mcmod.minecord.api.chat.event.minecraft.EntityDeathEvents;
 
 /**
  * Injects into, and broadcasts any player deaths.
  */
-@Mixin(ServerPlayerEntity.class)
+@Mixin(ServerPlayer.class)
 public abstract class ServerPlayerEntityMixin
 {
     /**
@@ -26,11 +26,11 @@ public abstract class ServerPlayerEntityMixin
         method = "onDeath",
         at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/server/world/ServerWorld;sendEntityStatus(Lnet/minecraft/entity/Entity;B)V"
+            target = "Lnet/minecraft/server/world/ServerLevel;sendEntityStatus(Lnet/minecraft/entity/Entity;B)V"
         )
     )
     public void onDeath(DamageSource source, CallbackInfo ci)
     {
-        EntityDeathEvents.PLAYER.invoker().onPlayerDeath((ServerPlayerEntity) (Object) this, source);
+        EntityDeathEvents.PLAYER.invoker().onPlayerDeath((ServerPlayer) (Object) this, source);
     }
 }

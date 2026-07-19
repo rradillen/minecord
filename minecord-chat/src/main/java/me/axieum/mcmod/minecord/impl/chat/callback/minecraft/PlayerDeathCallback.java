@@ -9,9 +9,9 @@ import eu.pb4.placeholders.api.PlaceholderContext;
 import eu.pb4.placeholders.api.PlaceholderHandler;
 import org.jetbrains.annotations.Nullable;
 
-import net.minecraft.entity.damage.DamageSource;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.stat.Stats;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.stats.Stats;
 
 import me.axieum.mcmod.minecord.api.Minecord;
 import me.axieum.mcmod.minecord.api.chat.event.minecraft.EntityDeathEvents;
@@ -27,7 +27,7 @@ import static me.axieum.mcmod.minecord.api.util.PlaceholdersExt.string;
 public class PlayerDeathCallback implements EntityDeathEvents.Player
 {
     @Override
-    public void onPlayerDeath(ServerPlayerEntity player, DamageSource source)
+    public void onPlayerDeath(ServerPlayer player, DamageSource source)
     {
         Minecord.getInstance().getJDA().ifPresent(jda -> {
             final String playerName = player.getDisplayName().getString();

@@ -11,7 +11,7 @@ import me.shedaniel.autoconfig.serializer.ConfigSerializer;
 import me.shedaniel.autoconfig.serializer.JanksonConfigSerializer;
 import me.shedaniel.cloth.clothconfig.shadowed.blue.endless.jankson.Comment;
 
-import net.minecraft.world.World;
+import net.minecraft.world.level.Level;
 
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 
@@ -493,7 +493,7 @@ public class ChatConfig implements ConfigData
          * @param world Minecraft world
          * @return true if the Minecraft world is in-scope
          */
-        public boolean hasWorld(World world)
+        public boolean hasWorld(Level world)
         {
             return world == null
                 || dimensions == null

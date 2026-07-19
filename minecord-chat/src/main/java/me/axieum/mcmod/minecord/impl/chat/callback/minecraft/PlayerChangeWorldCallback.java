@@ -5,9 +5,9 @@ import java.util.Map;
 import eu.pb4.placeholders.api.PlaceholderContext;
 import eu.pb4.placeholders.api.PlaceholderHandler;
 
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.core.BlockPos;
 
 import net.fabricmc.fabric.api.entity.event.v1.ServerEntityWorldChangeEvents;
 
@@ -24,7 +24,7 @@ import static me.axieum.mcmod.minecord.api.util.PlaceholdersExt.string;
 public class PlayerChangeWorldCallback implements ServerEntityWorldChangeEvents.AfterPlayerChange
 {
     @Override
-    public void afterChangeWorld(ServerPlayerEntity player, ServerWorld origin, ServerWorld dest)
+    public void afterChangeWorld(ServerPlayer player, ServerLevel origin, ServerLevel dest)
     {
         Minecord.getInstance().getJDA().ifPresent(jda -> {
             final BlockPos lastBlockPos = ((LivingEntityAccessor) player).getLastBlockPos();

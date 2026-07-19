@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import net.minecraft.util.Identifier;
+import net.minecraft.resources.Identifier;
 
 @DisplayName("String Utils")
 public class StringUtilsTests
@@ -177,11 +177,11 @@ public class StringUtilsTests
     {
         assertEquals(
             "Overworld",
-            StringUtils.deriveWorldName(Identifier.of("minecraft", "overworld"))
+            StringUtils.deriveWorldName(Identifier.fromNamespaceAndPath("minecraft", "overworld"))
         );
         assertEquals(
             "Deep Dark",
-            StringUtils.deriveWorldName(Identifier.of("extrautils", "the_deep_dark"))
+            StringUtils.deriveWorldName(Identifier.fromNamespaceAndPath("extrautils", "the_deep_dark"))
         );
     }
 

@@ -3,7 +3,7 @@ package me.axieum.mcmod.minecord.api.event;
 import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.util.crash.CrashReport;
+import net.minecraft.CrashReport;
 
 import net.fabricmc.fabric.api.event.Event;
 import net.fabricmc.fabric.api.event.EventFactory;

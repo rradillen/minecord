@@ -13,12 +13,12 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 
-import net.minecraft.command.EntitySelectorReader;
-import net.minecraft.command.argument.EntityArgumentType;
-import net.minecraft.command.argument.TextArgumentType;
-import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.server.command.TellRawCommand;
-import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.commands.arguments.selector.EntitySelectorParser;
+import net.minecraft.commands.arguments.EntityArgument;
+import net.minecraft.commands.arguments.ComponentArgument;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.server.commands.TellRawCommand;
+import net.minecraft.server.level.ServerPlayer;
 
 import me.axieum.mcmod.minecord.api.chat.event.minecraft.TellRawMessageCallback;
 import me.axieum.mcmod.minecord.impl.chat.util.TellRawSelectors;
@@ -37,12 +37,12 @@ public abstract class TellRawCommandMixin
      * @param cir     mixin callback info
      */
     @Inject(method = "method_13777", at = @At(value = "TAIL"), remap = false)
-    private static void execute(CommandContext<ServerCommandSource> context, CallbackInfoReturnable<Integer> cir)
+    private static void execute(CommandContext<CommandSourceStack> context, CallbackInfoReturnable<Integer> cir)
     {
         // If the message was sent to *all* players, then also include Discord in the discussion
         if (targetsAllPlayers(context)) {
             TellRawMessageCallback.EVENT.invoker().onTellRawCommandMessage(
-                TextArgumentType.getTextArgument(context, "message"), context.getSource()
+                ComponentArgument.getTextArgument(context, "message"), context.getSource()
             );
         }
     }
@@ -60,20 +60,20 @@ public abstract class TellRawCommandMixin
         method = "method_13777",
         at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/command/argument/EntityArgumentType;getPlayers("
+            target = "Lnet/minecraft/command/argument/EntityArgument;getPlayers("
                 + "Lcom/mojang/brigadier/context/CommandContext;Ljava/lang/String;)Ljava/util/Collection;"
         )
     )
-    private static Collection<ServerPlayerEntity> getPlayers(
-        CommandContext<ServerCommandSource> context, String name
+    private static Collection<ServerPlayer> getPlayers(
+        CommandContext<CommandSourceStack> context, String name
     ) throws CommandSyntaxException
     {
         try {
             // Continue with execution as normal
-            return EntityArgumentType.getPlayers(context, name);
+            return EntityArgument.getPlayers(context, name);
         } catch (CommandSyntaxException e) {
             // If the command targets all players, but no players are online, return an empty list instead of failing
-            if (targetsAllPlayers(context) && e.getType() == EntityArgumentType.PLAYER_NOT_FOUND_EXCEPTION) {
+            if (targetsAllPlayers(context) && e.getType() == EntityArgument.PLAYER_NOT_FOUND_EXCEPTION) {
                 return Collections.emptyList();
             }
             // Else, continue by throwing the error as normal
@@ -88,11 +88,11 @@ public abstract class TellRawCommandMixin
      * @return true if the {@code /tellraw @a} command was executed
      */
     @Unique
-    private static boolean targetsAllPlayers(CommandContext<ServerCommandSource> context)
+    private static boolean targetsAllPlayers(CommandContext<CommandSourceStack> context)
     {
         return context.getNodes().size() > 1 && TellRawSelectors.isAllPlayersSelector(
             context.getNodes().get(1).getRange().get(context.getInput()),
-            EntitySelectorReader.SELECTOR_PREFIX // see private `EntitySelectorReader#ALL_PLAYERS` for 'a'
+            EntitySelectorParser.SELECTOR_PREFIX // see private `EntitySelectorParser#ALL_PLAYERS` for 'a'
         );
     }
 }
