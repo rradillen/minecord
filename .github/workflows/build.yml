@@ -37,6 +37,11 @@ jobs:
         with:
           arguments: 'check'
 
+      - name: 🎮 Run server game tests
+        uses: gradle/gradle-build-action@v2
+        with:
+          arguments: ':minecord-chat:runGametest'
+
       - name: 🔨 Build artifacts
         uses: gradle/gradle-build-action@v2
         with:

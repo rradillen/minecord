@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -189,17 +190,59 @@ public class CustomCommand extends MinecordCommand
         @Nullable MinecraftServer server
     ) throws ParsingException
     {
+        // Reduce the Discord command options down to a plain name-value mapping
+        final Map<String, String> values = new HashMap<>(options.size());
+        options.forEach(option -> values.put(option.getName(), option.getAsString()));
+
+        // Delegate to the mapping-agnostic core, deriving placeholder context from the server if present
+        return prepareCommand(command, values, server != null ? PlaceholderContext.of(server) : null);
+    }
+
+    /**
+     * Substitutes a Minecraft command template with plain option values.
+     *
+     * <p>This is the mapping-agnostic core of command preparation, decoupled from Discord's
+     * {@link OptionMapping} and from {@link MinecraftServer}. Note that the placeholder-substitution
+     * step still initialises the Fabric runtime (via the placeholder API's text conversion), so it is
+     * not reachable from plain unit tests; the Fabric-free decisions it delegates to — the
+     * {@link EmptyNode} short-circuit and {@link #normaliseCommand} — are what the unit tests pin.
+     *
+     * @param command Minecraft command template using {@code ${<name>}} for the 'name' argument
+     * @param options mapping of option name to substituted value
+     * @param ctx     optional placeholder context
+     * @return a prepared Minecraft command, without any leading {@code /}
+     */
+    static String prepareCommand(
+        @NotNull TextNode command,
+        @NotNull Map<String, String> options,
+        @Nullable PlaceholderContext ctx
+    )
+    {
         if (command == EmptyNode.INSTANCE) return "";
 
         // Prepare new command placeholders
-        final @Nullable PlaceholderContext ctx = server != null ? PlaceholderContext.of(server) : null;
         final HashMap<String, PlaceholderHandler> placeholders = new HashMap<>(options.size());
-        options.forEach(option -> placeholders.put(option.getName(), string(option.getAsString())));
+        options.forEach((name, value) -> placeholders.put(name, string(value)));
 
-        // Parse the placeholders in the given command
-        String result = PlaceholdersExt.parseString(command, ctx, placeholders).trim();
+        // Parse the placeholders in the given command, then normalise the result
+        return normaliseCommand(PlaceholdersExt.parseString(command, ctx, placeholders));
+    }
 
-        // Strip any leading '/' if present, and return
+    /**
+     * Normalises a prepared command string into a form suitable for the command dispatcher.
+     *
+     * <p>This is the mapping-agnostic, dependency-free tail of {@link #prepareCommand}: it trims
+     * surrounding whitespace and strips a single leading {@code /} so the string can be handed to
+     * {@code CommandDispatcher#parse}. It decides exactly what runs at op-level 4, so a regression
+     * here (e.g. failing to strip the slash, or stripping too much) would silently change the
+     * command that executes — hence it is pinned independently of the placeholder/Minecraft runtime.
+     *
+     * @param command raw prepared command, possibly padded and/or prefixed with a single {@code /}
+     * @return the trimmed command without a leading {@code /}
+     */
+    static String normaliseCommand(@NotNull String command)
+    {
+        final String result = command.trim();
         return !result.isEmpty() && result.charAt(0) == '/' ? result.substring(1) : result;
     }
 
