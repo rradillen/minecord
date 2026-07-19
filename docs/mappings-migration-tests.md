@@ -84,40 +84,65 @@ source at real authority. This keeps the build's dependency surface unchanged.
 > the most likely "corrupt the save" path. Tracked as a follow-up, out of scope for the
 > mappings migration itself.
 
-## Layer 3 — server gametest smoke tests (outstanding; the decisive layer)
+## Layer 3 — server gametest smoke tests (implemented; the decisive layer)
 
-A wrong mixin descriptor **fails silently** — no exception, the hook simply does not
-apply — so only a test that boots a real server and exercises the real command can catch
-it. This is the layer that actually protects the migration and is **not yet
-implemented**: it needs a Fabric gametest harness (`fabric-gametest` + a
-`runGametest`/server run configuration), which cannot be run or verified in the current
-CI sandbox (no game assets / network to launch a server). It is specified here so it can
-be added as a dedicated follow-up.
+Only a test that boots a real server and exercises the real mixins can catch a mapping
+regression in the injection descriptors. This layer is now **implemented** as a Fabric
+server gametest in the `minecord-chat` module:
 
-Target cases:
+- **Harness** — `fabric-gametest-api-v1` plus a loom `gametest` server run configuration in
+  `minecord-chat/build.gradle`. The tests live in the module's `test` source set
+  (`me.axieum.mcmod.minecord.gametest.chat.MinecordChatGameTest`) and are registered as a
+  test-only mod via `minecord-chat/src/test/resources/fabric.mod.json` (the `fabric-gametest`
+  entrypoint). Run with `./gradlew :minecord-chat:runGametest`; CI runs it in
+  `.github/workflows/build.yml`.
+- **Boot-time guarantee** — the chat mixins declare `"required": true` with
+  `defaultRequire: 1`, so a lost/renamed injection target makes mixin application throw at
+  server start. Merely booting the gametest server therefore already validates that *every*
+  chat mixin (`TellRawCommandMixin`, `LivingEntityMixin`, `ServerPlayerEntityMixin`,
+  `PlayerAdvancementTrackerMixin`) still resolves. The tests below add runtime confirmation
+  that each injection fires at the right point and its host method still completes.
 
-1. **`/tellraw @a` mixin fires** — run the command on a headless server and assert
-   `TellRawMessageCallback` was invoked (the `@Inject` on `method_13777` applied). Catches
-   the silent intermediary-descriptor mismatch called out in the migration inventory.
-2. **`/tellraw @a` with zero players online does not error** — the reason the `@Redirect`
-   on `EntityArgumentType.getPlayers` exists. Assert no `CommandSyntaxException` and that
-   the Discord callback still fires. Catches a broken redirect.
-3. **Observer mixins do not abort their host method** — trigger an entity death, a player
-   death and an advancement grant; assert the vanilla side-effect completes (entity
-   removed, advancement recorded) *and* the callback fired. This is what keeps a renamed
-   field that throws inside `onDeath`/`grantCriterion` from degrading "bad Discord output"
-   into "half-applied server state".
-4. **`CustomCommand` end-to-end (also covers Layer 2)** — feed a benign state-changing
-   command (e.g. `/time set` or `/gamerule`) through `CustomCommand.execute` against the
-   live server; assert the state actually changed, at op-4 authority, and that an
-   `ALLOW_EXECUTE` veto prevents any change.
+Implemented cases:
+
+1. **`/tellraw @a` mixin fires *and* the redirect swallows the empty selector** —
+   `tellRawToAllPlayersFiresCallback` runs `/tellraw @a {…}` from the op-4 server command
+   source with **zero players online** and asserts `TellRawMessageCallback` fired with the
+   expected message. This single test covers both the `@Inject` on the intermediary
+   `method_13777` (the callback only fires from its `TAIL`) and the `@Redirect` on
+   `EntityArgumentType.getPlayers` (a broken redirect would raise `PLAYER_NOT_FOUND` and
+   abort before the tail, so the callback would never fire). Catches the intermediary
+   descriptor mismatch called out in the migration inventory.
+2. **Animal death does not abort `onDeath`** — `animalDeathFiresCallback` spawns and kills a
+   pig, then asserts `EntityDeathEvents.ANIMAL_MONSTER` fired *and* the entity actually died
+   (`LivingEntityMixin`'s host `LivingEntity.onDeath` completed).
+3. **Player death does not abort `onDeath`** — `playerDeathFiresCallback` invokes the exact
+   host method the mixin targets (`ServerPlayerEntity.onDeath`) on a mock player and asserts
+   `EntityDeathEvents.PLAYER` fired. (Routing a mock player through the full damage pipeline
+   is mapping-unstable and creative-immunity-dependent, so the test drives `onDeath`
+   directly — the very method `ServerPlayerEntityMixin` injects into.)
+4. **Advancement grant does not abort `grantCriterion`** — `advancementGrantFiresCallback`
+   grants the first available advancement criterion to a mock player and asserts both that
+   the grant took effect *and* that `GrantCriterionCallback` fired
+   (`PlayerAdvancementTrackerMixin`).
+
+Still deferred:
+
+- **`CustomCommand` end-to-end** — feeding a benign state-changing command through
+  `CustomCommand.execute` still requires a JDA `SlashCommandInteractionEvent`, which a
+  headless gametest cannot fabricate without a Discord connection. The op-4 authority and
+  `ALLOW_EXECUTE` veto invariants (Layer 2) remain pinned by `CustomCommandTests` at the
+  Fabric-free seams; a full end-to-end command gametest is left as a follow-up.
 
 ## Running
 
 ```
-./gradlew test          # all modules — Layer 1 (fast, no game)
-./gradlew :minecord-cmds:test :minecord-chat:test   # targeted
+./gradlew test                                        # all modules — Layer 1 (fast, no game)
+./gradlew :minecord-cmds:test :minecord-chat:test     # targeted Layer 1
+./gradlew :minecord-chat:runGametest                  # Layer 3 — boots a headless server
 ```
 
 Layer 1 must stay green throughout the migration; a red Layer 1 means behaviour changed,
-not just names.
+not just names. A red Layer 3 (including a server that refuses to boot) means a mixin
+injection no longer resolves — exactly the silent breakage a mappings migration risks.
+

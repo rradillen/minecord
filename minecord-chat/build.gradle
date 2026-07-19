@@ -6,4 +6,24 @@ dependencies {
     modApi include(fabricApi.module("fabric-message-api-v1", project.fabric_version))
     modApi include(fabricApi.module("fabric-networking-api-v1", project.fabric_version))
     implementation shade("io.github.java-diff-utils:java-diff-utils:${project.java_diff_utils_version}")
+
+    // Fabric server game tests (dev/CI only, not bundled into the published jar)
+    modImplementation fabricApi.module("fabric-gametest-api-v1", project.fabric_version)
+}
+
+// Boots a real, headless dedicated server and exercises the chat mixins/callbacks.
+// Run with `./gradlew :minecord-chat:runGametest`.
+loom {
+    runs {
+        gametest {
+            server()
+            name = 'Minecord Chat Game Test'
+            // Game tests live alongside the JUnit tests in the `test` source set
+            source sourceSets.test
+            // Instruct Fabric to run the game tests headlessly and exit with the result
+            property 'fabric-api.gametest'
+            property 'fabric-api.gametest.report-file', "${layout.buildDirectory.get()}/junit-gametest.xml"
+            runDir 'build/gametest'
+        }
+    }
 }

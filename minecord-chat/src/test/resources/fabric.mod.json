@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "id": "minecord-chat-gametest",
+  "version": "0.0.0",
+  "name": "Minecord Chat Game Tests",
+  "description": "Server game tests that exercise the Minecord Chat mixins and callbacks.",
+  "license": "MIT",
+  "environment": "server",
+  "entrypoints": {
+    "fabric-gametest": [
+      "me.axieum.mcmod.minecord.gametest.chat.MinecordChatGameTest"
+    ]
+  },
+  "depends": {
+    "minecord-chat": "*",
+    "fabric-gametest-api-v1": "*"
+  }
+}
