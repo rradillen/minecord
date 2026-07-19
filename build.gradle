@@ -3,7 +3,7 @@ plugins {
     id 'checkstyle'
     id 'maven-publish'
     id 'com.modrinth.minotaur' version '2.8.10'
-    id 'com.matthewprenger.cursegradle' version '1.4.0'
+    id 'io.github.themrmilchmann.curseforge-publish' version '0.9.0'
     id 'com.gradleup.shadow' version '9.3.1'
     id 'fabric-loom' version '1.14-SNAPSHOT'
 }
@@ -169,45 +169,64 @@ dependencies {
     }
 }
 
+import io.github.themrmilchmann.gradle.publish.curseforge.ChangelogFormat
+import io.github.themrmilchmann.gradle.publish.curseforge.ReleaseType
+
 // Define how artifacts are published to CurseForge (https://curseforge.com)
 curseforge {
     // Set the API token from the environment
-    apiKey System.getenv('CURSEFORGE_TOKEN') ?: ''
+    apiToken.set(System.getenv('CURSEFORGE_TOKEN') ?: '')
 
-    // Declare all projects
-    project {
-        // Set the project id
-        id = project.cf_project_id
-        // Set the release type
-        releaseType = project.version.contains('alpha') ? 'alpha' : project.version.contains('beta') ? 'beta' : 'release'
-        // Set the release notes
-        changelog = project.getChangelogNotes()
-        // Add all supported game versions
-        project.cf_game_versions.split(', ').each { addGameVersion it }
-        // Add the main artifact
-        mainArtifact(remapJar) { displayName = "${project.mod_name} v${project.version}" }
-        // Add any additional artifacts
-        addArtifact remapSourcesJar
-        addArtifact javadocJar
-        subprojects.each {
-            addArtifact it.remapJar
-            addArtifact it.remapSourcesJar
-            addArtifact it.javadocJar
-        }
-        // Add any dependencies
-        relations {
-            if (project.cf_relations_required) project.cf_relations_required.split(', ').each { requiredDependency it }
-            if (project.cf_relations_optional) project.cf_relations_optional.split(', ').each { optionalDependency it }
-            if (project.cf_relations_embedded) project.cf_relations_embedded.split(', ').each { embeddedLibrary it }
-            if (project.cf_relations_tools) project.cf_relations_tools.split(', ').each { tool it }
-            if (project.cf_relations_incompatible) project.cf_relations_incompatible.split(', ').each { incompatible it }
-        }
-    }
+    publications {
+        named('fabric') {
+            projectId.set(project.cf_project_id)
 
-    // Configure other options
-    options {
-        forgeGradleIntegration = false
-        debug = (System.getenv('CURSEFORGE_DEBUG') ?: 'false').toBoolean()
+            artifacts {
+                named('main') {
+                    displayName.set("${project.mod_name} v${project.version}")
+                    releaseType.set(
+                        project.version.contains('alpha')
+                            ? ReleaseType.ALPHA
+                            : project.version.contains('beta')
+                                ? ReleaseType.BETA
+                                : ReleaseType.RELEASE
+                    )
+                    changelog {
+                        format.set(ChangelogFormat.MARKDOWN)
+                        content.set(project.getChangelogNotes())
+                    }
+                    relations {
+                        if (project.cf_relations_required) project.cf_relations_required.split(', ').each { requiredDependency it }
+                        if (project.cf_relations_optional) project.cf_relations_optional.split(', ').each { optionalDependency it }
+                        if (project.cf_relations_embedded) project.cf_relations_embedded.split(', ').each { embeddedLibrary it }
+                        if (project.cf_relations_tools) project.cf_relations_tools.split(', ').each { tool it }
+                        if (project.cf_relations_incompatible) project.cf_relations_incompatible.split(', ').each { incompatible it }
+                    }
+                }
+
+                register('sources') {
+                    from(tasks.named('remapSourcesJar'))
+                    displayName.set("${project.mod_name} v${project.version} (Sources)")
+                }
+
+                register('javadocs') {
+                    from(tasks.named('javadocJar'))
+                    displayName.set("${project.mod_name} v${project.version} (Javadocs)")
+                }
+
+                subprojects.each {
+                    register("${it.name}Main") {
+                        from(it.tasks.named('remapJar'))
+                    }
+                    register("${it.name}Sources") {
+                        from(it.tasks.named('remapSourcesJar'))
+                    }
+                    register("${it.name}Javadocs") {
+                        from(it.tasks.named('javadocJar'))
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -250,4 +269,4 @@ modrinth {
     if (project.mr_relations_incompatible) dependencies.addAll project.mr_relations_incompatible.split(', ').collect { new ModDependency(it, 'incompatible') }
 }
 
-publish.finalizedBy tasks.curseforge, tasks.modrinth
+publish.finalizedBy tasks.modrinth
