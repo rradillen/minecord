@@ -9,17 +9,17 @@ import net.dv8tion.jda.api.events.message.MessageUpdateEvent;
 import net.dv8tion.jda.api.events.message.react.GenericMessageReactionEvent;
 import org.jetbrains.annotations.Nullable;
 
+import net.minecraft.CrashReport;
 import net.minecraft.advancements.Advancement;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.network.chat.ChatType;
+import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.PlayerChatMessage;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.commands.CommandSourceStack;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.network.chat.Component;
-import net.minecraft.CrashReport;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.LivingEntity;
 
 import net.fabricmc.fabric.api.event.Event;
 import net.fabricmc.fabric.api.event.EventFactory;
@@ -416,7 +416,7 @@ public final class ChatPlaceholderEvents
              * @see net.fabricmc.fabric.api.message.v1.ServerMessageEvents#CHAT_MESSAGE
              */
             void onPlayerChatPlaceholder(
-                StringTemplate template, ServerPlayer player, PlayerChatMessage message, ChatType.Parameters params
+                StringTemplate template, ServerPlayer player, PlayerChatMessage message, ChatType.Bound params
             );
         }
 
@@ -483,11 +483,11 @@ public final class ChatPlaceholderEvents
              * @param source   source of the command, e.g. a player
              * @param action   received message contents
              * @param params   received message parameters
-             * @see net.minecraft.network.message.ChatType#EMOTE_COMMAND
+             * @see net.minecraft.network.chat.ChatType#EMOTE_COMMAND
              * @see net.fabricmc.fabric.api.message.v1.ServerMessageEvents#COMMAND_MESSAGE
              */
             void onEmoteCommandPlaceholder(
-                StringTemplate template, CommandSourceStack source, PlayerChatMessage action, ChatType.Parameters params
+                StringTemplate template, CommandSourceStack source, PlayerChatMessage action, ChatType.Bound params
             );
         }
 
@@ -506,11 +506,11 @@ public final class ChatPlaceholderEvents
              * @param source   source of the message, e.g. a player
              * @param action   received message contents
              * @param params   received message parameters
-             * @see net.minecraft.network.message.ChatType#SAY_COMMAND
+             * @see net.minecraft.network.chat.ChatType#SAY_COMMAND
              * @see net.fabricmc.fabric.api.message.v1.ServerMessageEvents#COMMAND_MESSAGE
              */
             void onSayCommandPlaceholder(
-                StringTemplate template, CommandSourceStack source, PlayerChatMessage action, ChatType.Parameters params
+                StringTemplate template, CommandSourceStack source, PlayerChatMessage action, ChatType.Bound params
             );
         }
 

@@ -13,10 +13,10 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 
-import net.minecraft.commands.arguments.selector.EntitySelectorParser;
-import net.minecraft.commands.arguments.EntityArgument;
-import net.minecraft.commands.arguments.ComponentArgument;
 import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.arguments.ComponentArgument;
+import net.minecraft.commands.arguments.EntityArgument;
+import net.minecraft.commands.arguments.selector.EntitySelectorParser;
 import net.minecraft.server.commands.TellRawCommand;
 import net.minecraft.server.level.ServerPlayer;
 
@@ -42,7 +42,7 @@ public abstract class TellRawCommandMixin
         // If the message was sent to *all* players, then also include Discord in the discussion
         if (targetsAllPlayers(context)) {
             TellRawMessageCallback.EVENT.invoker().onTellRawCommandMessage(
-                ComponentArgument.getTextArgument(context, "message"), context.getSource()
+                ComponentArgument.getRawComponent(context, "message"), context.getSource()
             );
         }
     }
@@ -60,7 +60,7 @@ public abstract class TellRawCommandMixin
         method = "method_13777",
         at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/command/argument/EntityArgument;getPlayers("
+            target = "Lnet/minecraft/commands/arguments/EntityArgument;getPlayers("
                 + "Lcom/mojang/brigadier/context/CommandContext;Ljava/lang/String;)Ljava/util/Collection;"
         )
     )
@@ -73,7 +73,7 @@ public abstract class TellRawCommandMixin
             return EntityArgument.getPlayers(context, name);
         } catch (CommandSyntaxException e) {
             // If the command targets all players, but no players are online, return an empty list instead of failing
-            if (targetsAllPlayers(context) && e.getType() == EntityArgument.PLAYER_NOT_FOUND_EXCEPTION) {
+            if (targetsAllPlayers(context) && e.getType() == EntityArgument.NO_PLAYERS_FOUND) {
                 return Collections.emptyList();
             }
             // Else, continue by throwing the error as normal
@@ -92,7 +92,7 @@ public abstract class TellRawCommandMixin
     {
         return context.getNodes().size() > 1 && TellRawSelectors.isAllPlayersSelector(
             context.getNodes().get(1).getRange().get(context.getInput()),
-            EntitySelectorParser.SELECTOR_PREFIX // see private `EntitySelectorParser#ALL_PLAYERS` for 'a'
+            EntitySelectorParser.SYNTAX_SELECTOR_START // see private `EntitySelectorParser#ALL_PLAYERS` for 'a'
         );
     }
 }

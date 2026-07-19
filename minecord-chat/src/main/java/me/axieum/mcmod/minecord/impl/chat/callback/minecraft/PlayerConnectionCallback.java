@@ -8,8 +8,8 @@ import eu.pb4.placeholders.api.PlaceholderHandler;
 import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.network.ServerGamePacketListenerImpl;
 
 import net.fabricmc.fabric.api.networking.v1.PacketSender;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents.Disconnect;
@@ -45,8 +45,8 @@ public class PlayerConnectionCallback implements Join, Disconnect
                 (embed, entry) -> embed.setDescription(
                     PlaceholdersExt.parseString(entry.discord.joinNode, ctx, placeholders)
                 ),
-                entry -> entry.discord.join != null && entry.hasWorld(player.getEntityWorld()),
-                player.getUuidAsString()
+                entry -> entry.discord.join != null && entry.hasWorld(player.level()),
+                player.getStringUUID()
             );
         });
     }
@@ -72,8 +72,8 @@ public class PlayerConnectionCallback implements Join, Disconnect
                 (embed, entry) -> embed.setDescription(
                     PlaceholdersExt.parseString(entry.discord.leaveNode, ctx, placeholders)
                 ),
-                entry -> entry.discord.leave != null && entry.hasWorld(player.getEntityWorld()),
-                player.getUuidAsString()
+                entry -> entry.discord.leave != null && entry.hasWorld(player.level()),
+                player.getStringUUID()
             );
         });
     }

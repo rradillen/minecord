@@ -19,7 +19,7 @@ import me.axieum.mcmod.minecord.api.chat.event.minecraft.GrantCriterionCallback;
 public abstract class PlayerAdvancementTrackerMixin
 {
     @Shadow
-    private ServerPlayer owner;
+    private ServerPlayer player;
 
     /**
      * Broadcasts any granted advancement criterion.
@@ -28,10 +28,10 @@ public abstract class PlayerAdvancementTrackerMixin
      * @param criterion   name of the criterion granted
      * @param cir         mixin callback info
      */
-    @Inject(method = "grantCriterion", at = @At(value = "INVOKE", target = "Lnet/minecraft/advancement/"
-        + "AdvancementRewards;apply(Lnet/minecraft/server/network/ServerPlayer;)V"))
+    @Inject(method = "award", at = @At(value = "INVOKE", target = "Lnet/minecraft/advancements/"
+        + "AdvancementRewards;grant(Lnet/minecraft/server/level/ServerPlayer;)V"))
     public void grantCriterion(AdvancementHolder advancement, String criterion, CallbackInfoReturnable<Boolean> cir)
     {
-        GrantCriterionCallback.EVENT.invoker().onGrantCriterion(owner, advancement.value(), criterion);
+        GrantCriterionCallback.EVENT.invoker().onGrantCriterion(player, advancement.value(), criterion);
     }
 }

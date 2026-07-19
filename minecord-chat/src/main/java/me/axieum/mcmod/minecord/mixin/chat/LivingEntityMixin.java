@@ -5,8 +5,8 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.LivingEntity;
 
 import me.axieum.mcmod.minecord.api.chat.event.minecraft.EntityDeathEvents;
 
@@ -22,8 +22,8 @@ public abstract class LivingEntityMixin
      * @param source damage source
      * @param ci     mixin callback info
      */
-    @Inject(method = "onDeath", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/Level;sendEntityStatus("
-        + "Lnet/minecraft/entity/Entity;B)V"))
+    @Inject(method = "die", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/Level;broadcastEntityEvent("
+        + "Lnet/minecraft/world/entity/Entity;B)V"))
     public void onDeath(DamageSource source, CallbackInfo ci)
     {
         EntityDeathEvents.ANIMAL_MONSTER.invoker().onEntityDeath((LivingEntity) (Object) this, source);

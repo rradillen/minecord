@@ -8,11 +8,11 @@ import eu.pb4.placeholders.api.PlaceholderHandler;
 import org.jetbrains.annotations.Nullable;
 import static net.dv8tion.jda.api.EmbedBuilder.URL_PATTERN;
 
-import net.minecraft.network.chat.ChatType;
-import net.minecraft.network.chat.PlayerChatMessage;
 import net.minecraft.commands.CommandSourceStack;
-import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.network.chat.ChatType;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.PlayerChatMessage;
+import net.minecraft.server.level.ServerPlayer;
 
 import net.fabricmc.fabric.api.message.v1.ServerMessageEvents.ChatMessage;
 import net.fabricmc.fabric.api.message.v1.ServerMessageEvents.CommandMessage;
@@ -32,7 +32,7 @@ public class ServerMessageCallback implements ChatMessage, CommandMessage, TellR
 {
     @Override
     public void onChatMessage(
-        PlayerChatMessage message, ServerPlayer player, ChatType.Parameters params
+        PlayerChatMessage message, ServerPlayer player, ChatType.Bound params
     )
     {
         Minecord.getInstance().getJDA().ifPresent(jda -> {
@@ -43,7 +43,7 @@ public class ServerMessageCallback implements ChatMessage, CommandMessage, TellR
             final PlaceholderContext ctx = PlaceholderContext.of(player);
             final Map<String, PlaceholderHandler> placeholders = Map.of(
                 // The formatted message contents
-                "message", string(StringUtils.minecraftToDiscord(message.getContent().getString()))
+                "message", string(StringUtils.minecraftToDiscord(message.decoratedContent().getString()))
             );
 
             /*
@@ -54,17 +54,17 @@ public class ServerMessageCallback implements ChatMessage, CommandMessage, TellR
                 (embed, entry) -> embed.setContent(
                     replaceLinks(PlaceholdersExt.parseString(entry.discord.chatNode, ctx, placeholders), entry)
                 ),
-                entry -> entry.discord.chat != null && entry.hasWorld(player.getEntityWorld())
+                entry -> entry.discord.chat != null && entry.hasWorld(player.level())
             );
         });
     }
 
     @Override
     public void onCommandMessage(
-        PlayerChatMessage message, CommandSourceStack source, ChatType.Parameters params
+        PlayerChatMessage message, CommandSourceStack source, ChatType.Bound params
     )
     {
-        final String typeKey = params.type().value().chat().translationKey();
+        final String typeKey = params.chatType().value().chat().translationKey();
         if ("chat.type.emote".equals(typeKey)) {
             // '/me <action>'
             onEmoteCommandMessage(message, source, params);
@@ -83,7 +83,7 @@ public class ServerMessageCallback implements ChatMessage, CommandMessage, TellR
      * @param source  command source that sent the message
      * @param params  message parameters
      */
-    public void onEmoteCommandMessage(PlayerChatMessage message, CommandSourceStack source, ChatType.Parameters params)
+    public void onEmoteCommandMessage(PlayerChatMessage message, CommandSourceStack source, ChatType.Bound params)
     {
         Minecord.getInstance().getJDA().ifPresent(jda -> {
             final @Nullable ServerPlayer player = source.getPlayer();
@@ -95,7 +95,7 @@ public class ServerMessageCallback implements ChatMessage, CommandMessage, TellR
             final PlaceholderContext ctx = PlaceholderContext.of(source);
             final Map<String, PlaceholderHandler> placeholders = new HashMap<>(Map.of(
                 // The formatted message contents
-                "action", string(StringUtils.minecraftToDiscord(message.getContent().getString()))
+                "action", string(StringUtils.minecraftToDiscord(message.decoratedContent().getString()))
             ));
 
             /*
@@ -106,7 +106,7 @@ public class ServerMessageCallback implements ChatMessage, CommandMessage, TellR
                 (embed, entry) -> embed.setContent(
                     replaceLinks(PlaceholdersExt.parseString(entry.discord.emoteNode, ctx, placeholders), entry)
                 ),
-                entry -> entry.discord.emote != null && (player == null || entry.hasWorld(source.getWorld()))
+                entry -> entry.discord.emote != null && (player == null || entry.hasWorld(source.getLevel()))
             );
         });
     }
@@ -120,7 +120,7 @@ public class ServerMessageCallback implements ChatMessage, CommandMessage, TellR
      * @param source  command source that sent the message
      * @param params  message parameters
      */
-    public void onSayCommandMessage(PlayerChatMessage message, CommandSourceStack source, ChatType.Parameters params)
+    public void onSayCommandMessage(PlayerChatMessage message, CommandSourceStack source, ChatType.Bound params)
     {
         Minecord.getInstance().getJDA().ifPresent(jda -> {
             final @Nullable ServerPlayer player = source.getPlayer();
@@ -132,7 +132,7 @@ public class ServerMessageCallback implements ChatMessage, CommandMessage, TellR
             final PlaceholderContext ctx = PlaceholderContext.of(source);
             final Map<String, PlaceholderHandler> placeholders = new HashMap<>(Map.of(
                 // The formatted message contents
-                "message", string(StringUtils.minecraftToDiscord(message.getContent().getString()))
+                "message", string(StringUtils.minecraftToDiscord(message.decoratedContent().getString()))
             ));
 
             /*
@@ -143,7 +143,7 @@ public class ServerMessageCallback implements ChatMessage, CommandMessage, TellR
                 (embed, entry) -> embed.setContent(
                     PlaceholdersExt.parseString(entry.discord.sayNode, ctx, placeholders)
                 ),
-                entry -> entry.discord.say != null && (player == null || entry.hasWorld(source.getWorld()))
+                entry -> entry.discord.say != null && (player == null || entry.hasWorld(source.getLevel()))
             );
         });
     }

@@ -498,7 +498,7 @@ public class ChatConfig implements ConfigData
             return world == null
                 || dimensions == null
                 || dimensions.length == 0
-                || Arrays.asList(dimensions).contains(world.getRegistryKey().getValue().toString());
+                || Arrays.asList(dimensions).contains(world.dimension().identifier().toString());
         }
     }
 

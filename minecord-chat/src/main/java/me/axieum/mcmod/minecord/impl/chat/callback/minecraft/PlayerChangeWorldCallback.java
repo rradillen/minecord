@@ -5,9 +5,9 @@ import java.util.Map;
 import eu.pb4.placeholders.api.PlaceholderContext;
 import eu.pb4.placeholders.api.PlaceholderHandler;
 
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 
 import net.fabricmc.fabric.api.entity.event.v1.ServerEntityWorldChangeEvents;
 
@@ -63,7 +63,7 @@ public class PlayerChangeWorldCallback implements ServerEntityWorldChangeEvents.
                     PlaceholdersExt.parseString(entry.discord.teleportNode, ctx, placeholders)
                 ),
                 entry -> entry.discord.teleport != null && entry.hasWorld(dest),
-                player.getUuidAsString()
+                player.getStringUUID()
             );
         });
     }

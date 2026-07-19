@@ -4,15 +4,15 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
-import net.minecraft.advancement.AdvancementCriterion;
-import net.minecraft.advancement.AdvancementEntry;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.mob.MobEntity;
-import net.minecraft.entity.passive.PigEntity;
+import net.minecraft.advancements.AdvancementHolder;
+import net.minecraft.advancements.Criterion;
+import net.minecraft.core.BlockPos;
+import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.test.TestContext;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.animal.pig.Pig;
 
 import net.fabricmc.fabric.api.gametest.v1.GameTest;
 
@@ -48,9 +48,9 @@ public class MinecordChatGameTest
      * @param context game test context
      */
     @GameTest
-    public void tellRawToAllPlayersFiresCallback(TestContext context)
+    public void tellRawToAllPlayersFiresCallback(GameTestHelper context)
     {
-        final MinecraftServer server = context.getWorld().getServer();
+        final MinecraftServer server = context.getLevel().getServer();
 
         final AtomicBoolean fired = new AtomicBoolean(false);
         final AtomicReference<String> received = new AtomicReference<>(null);
@@ -60,8 +60,8 @@ public class MinecordChatGameTest
         });
 
         // Run '/tellraw @a ...' as the server (op level 4) with zero players online
-        server.getCommandManager().parseAndExecute(
-            server.getCommandSource(), "tellraw @a {\"text\":\"minecord gametest\"}"
+        server.getCommands().performPrefixedCommand(
+            server.createCommandSourceStack(), "tellraw @a {\"text\":\"minecord gametest\"}"
         );
 
         context.assertTrue(
@@ -72,7 +72,7 @@ public class MinecordChatGameTest
             "minecord gametest".equals(received.get()),
             "TellRawMessageCallback received an unexpected message: " + received.get()
         );
-        context.complete();
+        context.succeed();
     }
 
     /**
@@ -84,38 +84,38 @@ public class MinecordChatGameTest
      * @param context game test context
      */
     @GameTest
-    public void animalDeathFiresCallback(TestContext context)
+    public void animalDeathFiresCallback(GameTestHelper context)
     {
         final AtomicBoolean fired = new AtomicBoolean(false);
         EntityDeathEvents.ANIMAL_MONSTER.register((entity, source) -> {
-            if (entity instanceof PigEntity) {
+            if (entity instanceof Pig) {
                 fired.set(true);
             }
         });
 
-        final MobEntity pig = context.spawnMob(EntityType.PIG, new BlockPos(1, 1, 1));
-        context.killEntity(pig);
+        final Mob pig = context.spawn(EntityType.PIG, new BlockPos(1, 1, 1));
+        context.kill(pig);
 
         context.assertTrue(
             fired.get(),
             "EntityDeathEvents.ANIMAL_MONSTER did not fire on animal death (broken @Inject?)"
         );
         context.assertTrue(
-            pig.isDead(),
+            pig.isDeadOrDying(),
             "LivingEntity.onDeath did not complete for the killed animal"
         );
-        context.complete();
+        context.succeed();
     }
 
     /**
      * A player death must fire {@link EntityDeathEvents#PLAYER} (the {@code @Inject} into
-     * {@code ServerPlayerEntity.onDeath} in {@code ServerPlayerEntityMixin}) and the host
+     * {@code ServerPlayer.onDeath} in {@code ServerPlayerEntityMixin}) and the host
      * {@code onDeath} must still complete.
      *
      * @param context game test context
      */
     @GameTest
-    public void playerDeathFiresCallback(TestContext context)
+    public void playerDeathFiresCallback(GameTestHelper context)
     {
         final AtomicBoolean fired = new AtomicBoolean(false);
         EntityDeathEvents.PLAYER.register((player, source) -> fired.set(true));
@@ -123,14 +123,14 @@ public class MinecordChatGameTest
         // Invoke the exact host method the mixin injects into. A mapping/descriptor regression that
         // moved or dropped the injection point would either fail to fire the callback or throw inside
         // onDeath (failing this test), which is precisely the silent breakage we are guarding against.
-        final ServerPlayerEntity player = context.createMockCreativeServerPlayerInWorld();
-        player.onDeath(player.getDamageSources().genericKill());
+        final ServerPlayer player = context.makeMockServerPlayerInLevel();
+        player.die(player.damageSources().genericKill());
 
         context.assertTrue(
             fired.get(),
             "EntityDeathEvents.PLAYER did not fire on player death (broken @Inject?)"
         );
-        context.complete();
+        context.succeed();
     }
 
     /**
@@ -142,16 +142,16 @@ public class MinecordChatGameTest
      * @param context game test context
      */
     @GameTest
-    public void advancementGrantFiresCallback(TestContext context)
+    public void advancementGrantFiresCallback(GameTestHelper context)
     {
-        final MinecraftServer server = context.getWorld().getServer();
-        final ServerPlayerEntity player = context.createMockCreativeServerPlayerInWorld();
+        final MinecraftServer server = context.getLevel().getServer();
+        final ServerPlayer player = context.makeMockServerPlayerInLevel();
 
         // Find any advancement that exposes at least one criterion to grant
-        AdvancementEntry advancement = null;
+        AdvancementHolder advancement = null;
         String criterion = null;
-        for (AdvancementEntry entry : server.getAdvancementLoader().getAdvancements()) {
-            final Map<String, AdvancementCriterion<?>> criteria = entry.value().criteria();
+        for (AdvancementHolder entry : server.getAdvancements().getAllAdvancements()) {
+            final Map<String, Criterion<?>> criteria = entry.value().criteria();
             if (!criteria.isEmpty()) {
                 advancement = entry;
                 criterion = criteria.keySet().iterator().next();
@@ -168,13 +168,13 @@ public class MinecordChatGameTest
             }
         });
 
-        final boolean granted = player.getAdvancementTracker().grantCriterion(advancement, criterion);
+        final boolean granted = player.getAdvancements().award(advancement, criterion);
 
         context.assertTrue(granted, "grantCriterion did not report the criterion as newly granted");
         context.assertTrue(
             fired.get(),
             "GrantCriterionCallback did not fire on advancement grant (broken @Inject?)"
         );
-        context.complete();
+        context.succeed();
     }
 }

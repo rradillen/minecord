@@ -2,8 +2,8 @@ package me.axieum.mcmod.minecord.impl.callback;
 
 import org.jetbrains.annotations.Nullable;
 
-import net.minecraft.server.MinecraftServer;
 import net.minecraft.CrashReport;
+import net.minecraft.server.MinecraftServer;
 
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents.ServerStarted;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents.ServerStarting;
