@@ -201,10 +201,11 @@ public class CustomCommand extends MinecordCommand
     /**
      * Substitutes a Minecraft command template with plain option values.
      *
-     * <p>This is the mapping-agnostic core of command preparation: it depends only on the placeholder
-     * API and plain strings, so it can be exercised without a Discord {@link OptionMapping} or a
-     * {@link MinecraftServer}. It pins the behaviour where raw Discord input enters an op-level command,
-     * namely placeholder substitution, output trimming and leading-{@code /} stripping.
+     * <p>This is the mapping-agnostic core of command preparation, decoupled from Discord's
+     * {@link OptionMapping} and from {@link MinecraftServer}. Note that the placeholder-substitution
+     * step still initialises the Fabric runtime (via the placeholder API's text conversion), so it is
+     * not reachable from plain unit tests; the Fabric-free decisions it delegates to — the
+     * {@link EmptyNode} short-circuit and {@link #normaliseCommand} — are what the unit tests pin.
      *
      * @param command Minecraft command template using {@code ${<name>}} for the 'name' argument
      * @param options mapping of option name to substituted value
