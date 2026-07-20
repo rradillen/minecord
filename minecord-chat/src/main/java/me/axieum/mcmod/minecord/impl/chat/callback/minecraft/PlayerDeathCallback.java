@@ -9,9 +9,9 @@ import eu.pb4.placeholders.api.PlaceholderContext;
 import eu.pb4.placeholders.api.PlaceholderHandler;
 import org.jetbrains.annotations.Nullable;
 
-import net.minecraft.entity.damage.DamageSource;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.stat.Stats;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.stats.Stats;
+import net.minecraft.world.damagesource.DamageSource;
 
 import me.axieum.mcmod.minecord.api.Minecord;
 import me.axieum.mcmod.minecord.api.chat.event.minecraft.EntityDeathEvents;
@@ -27,7 +27,7 @@ import static me.axieum.mcmod.minecord.api.util.PlaceholdersExt.string;
 public class PlayerDeathCallback implements EntityDeathEvents.Player
 {
     @Override
-    public void onPlayerDeath(ServerPlayerEntity player, DamageSource source)
+    public void onPlayerDeath(ServerPlayer player, DamageSource source)
     {
         Minecord.getInstance().getJDA().ifPresent(jda -> {
             final String playerName = player.getDisplayName().getString();
@@ -39,19 +39,19 @@ public class PlayerDeathCallback implements EntityDeathEvents.Player
             final @Nullable PlaceholderContext ctx = PlaceholderContext.of(player);
             final Map<String, PlaceholderHandler> placeholders = Map.of(
                 // The reason for the player's death
-                "cause", string(source.getDeathMessage(player).getString().replaceFirst(
+                "cause", string(source.getLocalizedDeathMessage(player).getString().replaceFirst(
                     Pattern.quote(playerName), "").trim()
                 ),
                 // The total time for which the player was alive for
                 "lifespan", duration(Duration.ofSeconds(
-                    player.getStatHandler().getStat(Stats.CUSTOM.getOrCreateStat(Stats.TIME_SINCE_DEATH)) / 20
+                    player.getStats().getValue(Stats.CUSTOM.get(Stats.TIME_SINCE_DEATH)) / 20
                 )),
                 // The player's total score before they died
                 "score", string(String.valueOf(player.getScore())),
                 // The player's number of experience levels before they died
                 "exp", string(String.valueOf(player.experienceLevel)),
                 // The name of the world the player died in
-                "world", string(StringUtils.getWorldName(player.getEntityWorld()))
+                "world", string(StringUtils.getWorldName(player.level()))
             );
 
             /*
@@ -62,8 +62,8 @@ public class PlayerDeathCallback implements EntityDeathEvents.Player
                 (embed, entry) -> embed.setColor(Color.RED).setDescription(
                     PlaceholdersExt.parseString(entry.discord.deathNode, ctx, placeholders)
                 ),
-                entry -> entry.discord.death != null && entry.hasWorld(player.getEntityWorld()),
-                player.getUuidAsString()
+                entry -> entry.discord.death != null && entry.hasWorld(player.level()),
+                player.getStringUUID()
             );
         });
     }

@@ -1,7 +1,7 @@
 package me.axieum.mcmod.minecord.api.chat.event.minecraft;
 
-import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.text.Text;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.network.chat.Component;
 
 import net.fabricmc.fabric.api.event.Event;
 import net.fabricmc.fabric.api.event.EventFactory;
@@ -31,5 +31,5 @@ public interface TellRawMessageCallback
      * @param message broadcast message with message decorators applied if applicable
      * @param source  command source that sent the message
      */
-    void onTellRawCommandMessage(Text message, ServerCommandSource source);
+    void onTellRawCommandMessage(Component message, CommandSourceStack source);
 }

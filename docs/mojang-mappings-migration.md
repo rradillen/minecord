@@ -1,5 +1,17 @@
 # Yarn → Mojang mappings migration inventory (Layer 2)
 
+> **Status: COMPLETED (Minecraft 1.21.11).** The mod now builds against official
+> Mojang mappings via `loom.officialMojangMappings()` in `build.gradle`; the
+> `yarn_mappings` property has been removed from `gradle.properties` and `build.gradle`.
+> The checklist below is retained for historical reference. Note that a few "expected
+> Mojang symbol" entries below differed from the actual 1.21.11 Mojmap and were
+> corrected against the remapped jar during the migration — most notably:
+> `Identifier` is kept (in `net.minecraft.resources`, not renamed to `ResourceLocation`),
+> `ResourceKey.identifier()` (not `location()`), `Identifier.fromNamespaceAndPath(...)`
+> (no `.of(...)`), `GameRules` lives in `net.minecraft.world.level.gamerules` with
+> `.get(rule)`, command permissions use `PermissionSet.ALL_PERMISSIONS`, and
+> `TellRawCommand`'s private static method remains unnamed (`method_13777`, `remap=false`).
+
 Fabric Yarn mappings are frozen at Minecraft 1.21.11 and will not be published for
 newer Minecraft versions. Any upgrade past 1.21.11 therefore requires migrating the
 mod off Yarn mappings and onto official Mojang (Mojmap) mappings.

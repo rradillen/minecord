@@ -17,8 +17,8 @@ import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
 import org.samo_lego.fabrictailor.casts.TailoredPlayer;
 
-import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.world.entity.player.Player;
 
 import net.fabricmc.api.DedicatedServerModInitializer;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
@@ -130,7 +130,7 @@ public final class MinecordImpl implements Minecord, PreLaunchEntrypoint, Dedica
                 // Handle Fabric Tailor (https://github.com/samolego/FabricTailor) skins
                 String skinId = null;
                 if (FabricLoader.getInstance().isModLoaded("fabrictailor")) {
-                    PlayerEntity player = server.getPlayerManager().getPlayer(UUID.fromString(uuid));
+                    Player player = server.getPlayerList().getPlayer(UUID.fromString(uuid));
                     if (player != null) skinId = ((TailoredPlayer) player).fabrictailor_getSkinId();
                 }
                 // Format the avatar URL template and return

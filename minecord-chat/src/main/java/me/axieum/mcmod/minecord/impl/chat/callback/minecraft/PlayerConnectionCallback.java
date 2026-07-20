@@ -8,8 +8,8 @@ import eu.pb4.placeholders.api.PlaceholderHandler;
 import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.network.ServerPlayNetworkHandler;
-import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.network.ServerGamePacketListenerImpl;
 
 import net.fabricmc.fabric.api.networking.v1.PacketSender;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents.Disconnect;
@@ -25,10 +25,10 @@ import me.axieum.mcmod.minecord.impl.chat.util.DiscordDispatcher;
 public class PlayerConnectionCallback implements Join, Disconnect
 {
     @Override
-    public void onPlayReady(ServerPlayNetworkHandler handler, PacketSender sender, MinecraftServer server)
+    public void onPlayReady(ServerGamePacketListenerImpl handler, PacketSender sender, MinecraftServer server)
     {
         Minecord.getInstance().getJDA().ifPresent(jda -> {
-            final ServerPlayerEntity player = handler.player;
+            final ServerPlayer player = handler.player;
 
             /*
              * Prepare the message placeholders.
@@ -45,17 +45,17 @@ public class PlayerConnectionCallback implements Join, Disconnect
                 (embed, entry) -> embed.setDescription(
                     PlaceholdersExt.parseString(entry.discord.joinNode, ctx, placeholders)
                 ),
-                entry -> entry.discord.join != null && entry.hasWorld(player.getEntityWorld()),
-                player.getUuidAsString()
+                entry -> entry.discord.join != null && entry.hasWorld(player.level()),
+                player.getStringUUID()
             );
         });
     }
 
     @Override
-    public void onPlayDisconnect(ServerPlayNetworkHandler handler, MinecraftServer server)
+    public void onPlayDisconnect(ServerGamePacketListenerImpl handler, MinecraftServer server)
     {
         Minecord.getInstance().getJDA().ifPresent(jda -> {
-            final ServerPlayerEntity player = handler.player;
+            final ServerPlayer player = handler.player;
 
             /*
              * Prepare the message placeholders.
@@ -72,8 +72,8 @@ public class PlayerConnectionCallback implements Join, Disconnect
                 (embed, entry) -> embed.setDescription(
                     PlaceholdersExt.parseString(entry.discord.leaveNode, ctx, placeholders)
                 ),
-                entry -> entry.discord.leave != null && entry.hasWorld(player.getEntityWorld()),
-                player.getUuidAsString()
+                entry -> entry.discord.leave != null && entry.hasWorld(player.level()),
+                player.getStringUUID()
             );
         });
     }

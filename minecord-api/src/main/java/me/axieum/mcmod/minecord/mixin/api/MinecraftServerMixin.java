@@ -7,8 +7,8 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import net.minecraft.CrashReport;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.util.crash.CrashReport;
 
 import me.axieum.mcmod.minecord.api.event.ServerShutdownCallback;
 
@@ -39,8 +39,8 @@ public abstract class MinecraftServerMixin
      * @param crashReport Minecraft crash report being set
      * @param ci          mixin callback info
      */
-    @Inject(method = "setCrashReport", at = @At("TAIL"))
-    private void setCrashReport(CrashReport crashReport, CallbackInfo ci)
+    @Inject(method = "onServerCrash", at = @At("TAIL"))
+    private void onServerCrash(CrashReport crashReport, CallbackInfo ci)
     {
         MinecraftServerMixin.crashReport = crashReport;
     }

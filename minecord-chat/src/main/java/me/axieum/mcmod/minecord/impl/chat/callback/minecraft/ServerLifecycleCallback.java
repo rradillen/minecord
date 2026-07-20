@@ -15,8 +15,8 @@ import eu.pb4.placeholders.api.PlaceholderHandler;
 import net.dv8tion.jda.api.utils.FileUpload;
 import org.jetbrains.annotations.Nullable;
 
+import net.minecraft.CrashReport;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.util.crash.CrashReport;
 
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents.ServerStarted;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents.ServerStarting;
@@ -126,7 +126,7 @@ public class ServerLifecycleCallback implements ServerStarting, ServerStarted, S
                 "uptime", duration(Duration.ofMillis(ManagementFactory.getRuntimeMXBean().getUptime()))
             ));
             // The reason for the server stopping, if crashed
-            if (crashReport != null) placeholders.put("reason", string(crashReport.getMessage()));
+            if (crashReport != null) placeholders.put("reason", string(crashReport.getTitle()));
 
             /*
              * Dispatch the message.
@@ -144,7 +144,7 @@ public class ServerLifecycleCallback implements ServerStarting, ServerStarted, S
             // The server stopped due to an error
             } else {
                 // Fetch the crash report file
-                final Optional<File> file = Optional.ofNullable(crashReport.getFile())
+                final Optional<File> file = Optional.ofNullable(crashReport.getSaveFile())
                     .map(Path::toFile)
                     .filter(File::exists);
 

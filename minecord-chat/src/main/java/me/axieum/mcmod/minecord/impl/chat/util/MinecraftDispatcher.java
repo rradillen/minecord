@@ -10,8 +10,8 @@ import org.apache.logging.log4j.util.TriConsumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.text.Text;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
 
 import me.axieum.mcmod.minecord.api.Minecord;
 import me.axieum.mcmod.minecord.impl.chat.config.ChatConfig;
@@ -36,10 +36,10 @@ public final class MinecraftDispatcher
      * @see #dispatch(Function, TriConsumer, Predicate)
      */
     public static void dispatch(
-        Function<ChatEntrySchema, @Nullable Text> supplier, Predicate<ChatEntrySchema> predicate
+        Function<ChatEntrySchema, @Nullable Component> supplier, Predicate<ChatEntrySchema> predicate
     )
     {
-        dispatch(supplier, (player, text, entry) -> player.sendMessage(text, false), predicate);
+        dispatch(supplier, (player, text, entry) -> player.displayClientMessage(text, false), predicate);
     }
 
     /**
@@ -51,14 +51,14 @@ public final class MinecraftDispatcher
      * @see ChatConfig#entries
      */
     public static void dispatch(
-        Function<ChatEntrySchema, @Nullable Text> supplier,
-        TriConsumer<ServerPlayerEntity, @NotNull Text, ChatEntrySchema> action,
+        Function<ChatEntrySchema, @Nullable Component> supplier,
+        TriConsumer<ServerPlayer, @NotNull Component, ChatEntrySchema> action,
         Predicate<ChatEntrySchema> predicate
     )
     {
         // Fetch the Minecraft server instance, only if there is at least one player logged in
         Minecord.getInstance().getMinecraft().filter(server ->
-            server.getPlayerManager() != null && server.getCurrentPlayerCount() > 0
+            server.getPlayerList() != null && server.getPlayerCount() > 0
         ).ifPresent(server ->
             // Prepare a stream of configured chat entries
             Arrays.stream(getConfig().entries)
@@ -67,16 +67,16 @@ public final class MinecraftDispatcher
                   .filter(predicate)
                   // Build and send each chat entry
                   .forEach(entry -> {
-                      final Text text = supplier.apply(entry);
+                      final Component text = supplier.apply(entry);
                       if (text != null) {
                           // Fetch all players
-                          Stream<ServerPlayerEntity> players = server.getPlayerManager().getPlayerList().stream();
+                          Stream<ServerPlayer> players = server.getPlayerList().getPlayers().stream();
 
                           // Conditionally filter players to those in the in-scope dimensions
                           if (entry.dimensions != null && entry.dimensions.length > 0) {
                               final List<String> dims = Arrays.asList(entry.dimensions);
                               players = players.filter(player ->
-                                  dims.contains(player.getEntityWorld().getRegistryKey().getValue().toString())
+                                  dims.contains(player.level().dimension().identifier().toString())
                               );
                           }
 
