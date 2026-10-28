@@ -10,13 +10,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
-import eu.pb4.placeholders.api.PlaceholderContext;
-import eu.pb4.placeholders.api.PlaceholderHandler;
+import eu.pb4.placeholders.api.ServerPlaceholderContext;
 import net.dv8tion.jda.api.utils.FileUpload;
 import org.jetbrains.annotations.Nullable;
 
+import net.minecraft.CrashReport;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.util.crash.CrashReport;
 
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents.ServerStarted;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents.ServerStarting;
@@ -25,6 +24,7 @@ import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents.ServerSt
 import me.axieum.mcmod.minecord.api.Minecord;
 import me.axieum.mcmod.minecord.api.event.ServerShutdownCallback;
 import me.axieum.mcmod.minecord.api.util.PlaceholdersExt;
+import me.axieum.mcmod.minecord.api.util.PlaceholdersExt.PlaceholderHandler;
 import me.axieum.mcmod.minecord.impl.chat.util.DiscordDispatcher;
 import static me.axieum.mcmod.minecord.api.util.PlaceholdersExt.duration;
 import static me.axieum.mcmod.minecord.api.util.PlaceholdersExt.string;
@@ -42,7 +42,7 @@ public class ServerLifecycleCallback implements ServerStarting, ServerStarted, S
              * Prepare the message placeholders.
              */
 
-            final PlaceholderContext ctx = PlaceholderContext.of(server);
+            final ServerPlaceholderContext ctx = ServerPlaceholderContext.of(server);
             final Map<String, PlaceholderHandler> placeholders = Collections.emptyMap();
 
             /*
@@ -66,7 +66,7 @@ public class ServerLifecycleCallback implements ServerStarting, ServerStarted, S
              * Prepare the message placeholders.
              */
 
-            final PlaceholderContext ctx = PlaceholderContext.of(server);
+            final ServerPlaceholderContext ctx = ServerPlaceholderContext.of(server);
             final Map<String, PlaceholderHandler> placeholders = Map.of(
                 // The time taken for the server to start
                 "uptime", duration(Duration.ofMillis(ManagementFactory.getRuntimeMXBean().getUptime()))
@@ -93,7 +93,7 @@ public class ServerLifecycleCallback implements ServerStarting, ServerStarted, S
              * Prepare the message placeholders.
              */
 
-            final PlaceholderContext ctx = PlaceholderContext.of(server);
+            final ServerPlaceholderContext ctx = ServerPlaceholderContext.of(server);
             final Map<String, PlaceholderHandler> placeholders = Map.of(
                 // The total time for which the server has been online for
                 "uptime", duration(Duration.ofMillis(ManagementFactory.getRuntimeMXBean().getUptime()))
@@ -120,13 +120,13 @@ public class ServerLifecycleCallback implements ServerStarting, ServerStarted, S
              * Prepare the message placeholders.
              */
 
-            final PlaceholderContext ctx = PlaceholderContext.of(server);
+            final ServerPlaceholderContext ctx = ServerPlaceholderContext.of(server);
             final Map<String, PlaceholderHandler> placeholders = new HashMap<>(Map.of(
                 // The total time for which the server has been online for
                 "uptime", duration(Duration.ofMillis(ManagementFactory.getRuntimeMXBean().getUptime()))
             ));
             // The reason for the server stopping, if crashed
-            if (crashReport != null) placeholders.put("reason", string(crashReport.getMessage()));
+            if (crashReport != null) placeholders.put("reason", string(crashReport.getExceptionMessage()));
 
             /*
              * Dispatch the message.
@@ -144,7 +144,7 @@ public class ServerLifecycleCallback implements ServerStarting, ServerStarted, S
             // The server stopped due to an error
             } else {
                 // Fetch the crash report file
-                final Optional<File> file = Optional.ofNullable(crashReport.getFile())
+                final Optional<File> file = Optional.ofNullable(crashReport.getSaveFile())
                     .map(Path::toFile)
                     .filter(File::exists);
 

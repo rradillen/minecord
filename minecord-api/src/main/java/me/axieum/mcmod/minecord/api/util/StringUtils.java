@@ -11,9 +11,9 @@ import java.util.regex.Pattern;
 import com.vdurmont.emoji.EmojiParser;
 import net.dv8tion.jda.api.entities.IMentionable;
 
-import net.minecraft.util.Formatting;
-import net.minecraft.util.Identifier;
-import net.minecraft.world.World;
+import net.minecraft.ChatFormatting;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.level.Level;
 
 import me.axieum.mcmod.minecord.api.Minecord;
 import static me.axieum.mcmod.minecord.impl.MinecordImpl.getConfig;
@@ -52,7 +52,7 @@ public final class StringUtils
             // Translate emojis from unicode
             .transform(EmojiParser::parseToAliases)
             // Strip any leftover formatting
-            .transform(Formatting::strip);
+            .transform(ChatFormatting::stripFormatting);
     }
 
     static {
@@ -106,7 +106,7 @@ public final class StringUtils
             .transform(s -> s.replace("@everyone", "@_everyone_"))
             .transform(s -> s.replace("@here", "@_here_"))
             // Strip any leftover formatting
-            .transform(Formatting::strip);
+            .transform(ChatFormatting::stripFormatting);
     }
 
     /**
@@ -142,9 +142,9 @@ public final class StringUtils
      * @return name of the given world
      * @see #deriveWorldName(Identifier)
      */
-    public static String getWorldName(final World world)
+    public static String getWorldName(final Level world)
     {
-        final Identifier identifier = world.getRegistryKey().getValue();
+        final Identifier identifier = world.dimension().identifier();
         return getConfig().i18n.worlds.getOrDefault(identifier.toString(), deriveWorldName(identifier));
     }
 

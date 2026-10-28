@@ -5,8 +5,7 @@ import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.Map;
 
-import eu.pb4.placeholders.api.PlaceholderContext;
-import eu.pb4.placeholders.api.PlaceholderHandler;
+import eu.pb4.placeholders.api.ServerPlaceholderContext;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.commands.DefaultMemberPermissions;
@@ -18,6 +17,7 @@ import net.minecraft.server.MinecraftServer;
 import me.axieum.mcmod.minecord.api.cmds.command.MinecordCommand;
 import me.axieum.mcmod.minecord.api.cmds.event.MinecordCommandEvents;
 import me.axieum.mcmod.minecord.api.util.PlaceholdersExt;
+import me.axieum.mcmod.minecord.api.util.PlaceholdersExt.PlaceholderHandler;
 import me.axieum.mcmod.minecord.impl.cmds.config.CommandConfig;
 import static me.axieum.mcmod.minecord.api.util.PlaceholdersExt.duration;
 import static me.axieum.mcmod.minecord.impl.cmds.MinecordCommandsImpl.getConfig;
@@ -56,7 +56,7 @@ public class UptimeCommand extends MinecordCommand
     public void execute(@NotNull SlashCommandInteractionEvent event, @Nullable MinecraftServer server)
     {
         // Prepare the message placeholders
-        final @Nullable PlaceholderContext ctx = server != null ? PlaceholderContext.of(server) : null;
+        final @Nullable ServerPlaceholderContext ctx = server != null ? ServerPlaceholderContext.of(server) : null;
 
         // Prepare an embed to be sent to the user
         EmbedBuilder embed = new EmbedBuilder().setDescription(

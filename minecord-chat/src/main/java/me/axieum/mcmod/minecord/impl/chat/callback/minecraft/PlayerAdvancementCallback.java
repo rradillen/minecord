@@ -2,16 +2,16 @@ package me.axieum.mcmod.minecord.impl.chat.callback.minecraft;
 
 import java.util.Map;
 
-import eu.pb4.placeholders.api.PlaceholderContext;
-import eu.pb4.placeholders.api.PlaceholderHandler;
+import eu.pb4.placeholders.api.ServerPlaceholderContext;
 
-import net.minecraft.advancement.Advancement;
-import net.minecraft.advancement.AdvancementDisplay;
-import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.advancements.Advancement;
+import net.minecraft.advancements.DisplayInfo;
+import net.minecraft.server.level.ServerPlayer;
 
 import me.axieum.mcmod.minecord.api.Minecord;
 import me.axieum.mcmod.minecord.api.chat.event.minecraft.GrantCriterionCallback;
 import me.axieum.mcmod.minecord.api.util.PlaceholdersExt;
+import me.axieum.mcmod.minecord.api.util.PlaceholdersExt.PlaceholderHandler;
 import me.axieum.mcmod.minecord.impl.chat.util.DiscordDispatcher;
 import static me.axieum.mcmod.minecord.api.util.PlaceholdersExt.string;
 
@@ -21,36 +21,36 @@ import static me.axieum.mcmod.minecord.api.util.PlaceholdersExt.string;
 public class PlayerAdvancementCallback implements GrantCriterionCallback
 {
     @Override
-    public void onGrantCriterion(ServerPlayerEntity player, Advancement advancement, String criterion)
+    public void onGrantCriterion(ServerPlayer player, Advancement advancement, String criterion)
     {
         Minecord.getInstance().getJDA().ifPresent(jda -> {
             // Only listen for advancements that should be announced
-            final AdvancementDisplay info = advancement.display().orElse(null);
-            if (info == null || !info.shouldAnnounceToChat()) return;
+            final DisplayInfo info = advancement.display().orElse(null);
+            if (info == null || !info.announceToChat()) return;
 
             /*
              * Prepare the message placeholders.
              */
 
-            final PlaceholderContext ctx = PlaceholderContext.of(player);
+            final ServerPlaceholderContext ctx = ServerPlaceholderContext.of(player);
             final Map<String, PlaceholderHandler> placeholders = Map.of(
                 // The title of the advancement
-                "title", string(info.getTitle().getString()),
+                "title", string(info.title().getString()),
                 // A description of the advancement
-                "description", string(info.getDescription().getString())
+                "description", string(info.description().getString())
             );
 
             /*
              * Dispatch the message.
              */
 
-            switch (info.getFrame()) {
+            switch (info.type()) {
                 // A player reached an advancement goal
                 case GOAL -> DiscordDispatcher.embed(
                     (embed, entry) -> embed.setDescription(
                         PlaceholdersExt.parseString(entry.discord.advancementGoalNode, ctx, placeholders)
                     ),
-                    entry -> entry.discord.advancementGoal != null && entry.hasWorld(player.getEntityWorld())
+                    entry -> entry.discord.advancementGoal != null && entry.hasWorld(player.level())
                 );
 
                 // A player completed an advancement challenge
@@ -58,7 +58,7 @@ public class PlayerAdvancementCallback implements GrantCriterionCallback
                     (embed, entry) -> embed.setDescription(
                         PlaceholdersExt.parseString(entry.discord.advancementChallengeNode, ctx, placeholders)
                     ),
-                    entry -> entry.discord.advancementChallenge != null && entry.hasWorld(player.getEntityWorld())
+                    entry -> entry.discord.advancementChallenge != null && entry.hasWorld(player.level())
                 );
 
                 // A player unlocked an advancement task
@@ -66,7 +66,7 @@ public class PlayerAdvancementCallback implements GrantCriterionCallback
                     (embed, entry) -> embed.setDescription(
                         PlaceholdersExt.parseString(entry.discord.advancementTaskNode, ctx, placeholders)
                     ),
-                    entry -> entry.discord.advancementTask != null && entry.hasWorld(player.getEntityWorld())
+                    entry -> entry.discord.advancementTask != null && entry.hasWorld(player.level())
                 );
             }
         });

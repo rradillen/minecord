@@ -1,14 +1,14 @@
 // Declare dependencies
 dependencies {
-    implementation project(path: ':minecord-api', configuration: 'namedElements')
+    implementation project(':minecord-api')
     implementation project(path: ':minecord-api', configuration: 'shade')
-    modApi include(fabricApi.module("fabric-entity-events-v1", project.fabric_version))
-    modApi include(fabricApi.module("fabric-message-api-v1", project.fabric_version))
-    modApi include(fabricApi.module("fabric-networking-api-v1", project.fabric_version))
+    api include(fabricApi.module("fabric-entity-events-v1", project.fabric_version))
+    api include(fabricApi.module("fabric-message-api-v1", project.fabric_version))
+    api include(fabricApi.module("fabric-networking-api-v1", project.fabric_version))
     implementation shade("io.github.java-diff-utils:java-diff-utils:${project.java_diff_utils_version}")
 
     // Fabric server game tests (dev/CI only, not bundled into the published jar)
-    modImplementation fabricApi.module("fabric-gametest-api-v1", project.fabric_version)
+    implementation fabricApi.module("fabric-gametest-api-v1", project.fabric_version)
 }
 
 // Boots a real, headless dedicated server and exercises the chat mixins/callbacks.

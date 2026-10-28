@@ -1,8 +1,8 @@
 package me.axieum.mcmod.minecord.api.chat.event.minecraft;
 
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.damage.DamageSource;
-import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.LivingEntity;
 
 import net.fabricmc.fabric.api.event.Event;
 import net.fabricmc.fabric.api.event.EventFactory;
@@ -44,7 +44,7 @@ public final class EntityDeathEvents
          * @param player victim player
          * @param source damage source
          */
-        void onPlayerDeath(ServerPlayerEntity player, DamageSource source);
+        void onPlayerDeath(ServerPlayer player, DamageSource source);
     }
 
     /** A callback for when an animal or monster had died. */

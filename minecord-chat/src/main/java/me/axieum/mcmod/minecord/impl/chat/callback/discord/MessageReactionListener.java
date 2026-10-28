@@ -3,14 +3,14 @@ package me.axieum.mcmod.minecord.impl.chat.callback.discord;
 import java.util.Map;
 
 import com.vdurmont.emoji.EmojiParser;
-import eu.pb4.placeholders.api.PlaceholderContext;
-import eu.pb4.placeholders.api.PlaceholderHandler;
+import eu.pb4.placeholders.api.ServerPlaceholderContext;
 import net.dv8tion.jda.api.events.message.react.GenericMessageReactionEvent;
 import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import org.jetbrains.annotations.Nullable;
 
 import me.axieum.mcmod.minecord.api.util.PlaceholdersExt;
+import me.axieum.mcmod.minecord.api.util.PlaceholdersExt.PlaceholderHandler;
 import me.axieum.mcmod.minecord.impl.chat.util.MinecraftDispatcher;
 import static me.axieum.mcmod.minecord.api.util.PlaceholdersExt.string;
 import static me.axieum.mcmod.minecord.impl.chat.MinecordChat.LOGGER;
@@ -41,7 +41,7 @@ public class MessageReactionListener extends ListenerAdapter
              * Prepare the message placeholders.
              */
 
-            final @Nullable PlaceholderContext ctx = PlaceholdersExt.getMinecordServerContext();
+            final @Nullable ServerPlaceholderContext ctx = PlaceholdersExt.getMinecordServerContext();
             final Map<String, PlaceholderHandler> placeholders = Map.of(
                 // The issuer's tag (i.e. username#discriminator), e.g. Axieum#1001
                 "issuer_tag", string(event.getUser().getName()),

@@ -1,5 +1,8 @@
 # Yarn → Mojang mappings migration inventory (Layer 2)
 
+> **Status:** the source migration to Minecraft 26.3 (Mojang names, Placeholder API 3.x) is
+> done and compiles, but mixins have not yet been verified on a running 26.3 server.
+
 Fabric Yarn mappings are frozen at Minecraft 1.21.11 and will not be published for
 newer Minecraft versions. Any upgrade past 1.21.11 therefore requires migrating the
 mod off Yarn mappings and onto official Mojang (Mojmap) mappings.

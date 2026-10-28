@@ -7,9 +7,9 @@ import org.jetbrains.annotations.Nullable;
 
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.text.Text;
 
 import net.fabricmc.fabric.api.event.Event;
 import net.fabricmc.fabric.api.event.EventFactory;
@@ -246,12 +246,12 @@ public final class MinecordCommandEvents
              * @param source  Minecraft command source
              * @return Minecraft command source used to execute the command
              */
-            @NotNull ServerCommandSource onBeforeCustomCommand(
+            @NotNull CommandSourceStack onBeforeCustomCommand(
                 MinecordCommand context,
                 SlashCommandInteractionEvent event,
                 @NotNull MinecraftServer server,
                 String command,
-                @NotNull ServerCommandSource source
+                @NotNull CommandSourceStack source
             );
         }
 
@@ -282,7 +282,7 @@ public final class MinecordCommandEvents
                 SlashCommandInteractionEvent event,
                 @NotNull MinecraftServer server,
                 String command,
-                Text text,
+                Component text,
                 boolean success,
                 EmbedBuilder embed
             );
