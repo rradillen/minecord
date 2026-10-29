@@ -1,7 +1,7 @@
 package me.axieum.mcmod.minecord.api.chat.event.minecraft;
 
-import net.minecraft.advancement.Advancement;
-import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.advancements.Advancement;
+import net.minecraft.server.level.ServerPlayer;
 
 import net.fabricmc.fabric.api.event.Event;
 import net.fabricmc.fabric.api.event.EventFactory;
@@ -29,5 +29,5 @@ public interface GrantCriterionCallback
      * @param advancement parent advancement
      * @param criterion   name of the criterion granted
      */
-    void onGrantCriterion(ServerPlayerEntity player, Advancement advancement, String criterion);
+    void onGrantCriterion(ServerPlayer player, Advancement advancement, String criterion);
 }

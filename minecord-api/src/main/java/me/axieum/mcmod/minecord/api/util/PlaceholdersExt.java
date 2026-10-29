@@ -2,27 +2,23 @@ package me.axieum.mcmod.minecord.api.util;
 
 import java.time.Duration;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.function.Supplier;
-import java.util.regex.Pattern;
 
 import eu.pb4.placeholders.api.ParserContext;
-import eu.pb4.placeholders.api.PlaceholderContext;
-import eu.pb4.placeholders.api.PlaceholderHandler;
 import eu.pb4.placeholders.api.PlaceholderResult;
 import eu.pb4.placeholders.api.Placeholders;
-import eu.pb4.placeholders.api.Placeholders.PlaceholderGetter;
-import eu.pb4.placeholders.api.node.EmptyNode;
+import eu.pb4.placeholders.api.ServerPlaceholderContext;
 import eu.pb4.placeholders.api.node.TextNode;
-import eu.pb4.placeholders.api.node.parent.ParentNode;
 import eu.pb4.placeholders.api.parsers.MarkdownLiteParserV1;
 import eu.pb4.placeholders.api.parsers.NodeParser;
-import eu.pb4.placeholders.api.parsers.PatternPlaceholderParser;
-import eu.pb4.placeholders.api.parsers.TextParserV1;
+import eu.pb4.placeholders.api.parsers.TagLikeParser;
 import org.apache.commons.lang3.time.DurationFormatUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import net.minecraft.text.Text;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
 
 import me.axieum.mcmod.minecord.api.Minecord;
 
@@ -31,15 +27,41 @@ import me.axieum.mcmod.minecord.api.Minecord;
  */
 public final class PlaceholdersExt
 {
-    /** The placeholder pattern used. */
-    public static final Pattern PLACEHOLDER_PATTERN = Placeholders.PREDEFINED_PLACEHOLDER_PATTERN;
+    /** A handler that resolves a placeholder (with an optional argument) to a result. */
+    @FunctionalInterface
+    public interface PlaceholderHandler
+    {
+        /**
+         * Resolves the placeholder.
+         *
+         * @param ctx placeholder context
+         * @param arg placeholder argument, or {@code null} if absent
+         * @return placeholder result
+         */
+        PlaceholderResult onPlaceholderRequest(@Nullable ServerPlaceholderContext ctx, @Nullable String arg);
+    }
+
+    /** A lookup of placeholder handlers by key. */
+    @FunctionalInterface
+    public interface PlaceholderGetter
+    {
+        /**
+         * Returns the handler for the given placeholder key.
+         *
+         * @param key placeholder key
+         * @return placeholder handler, or {@code null} if unknown
+         */
+        @Nullable PlaceholderHandler get(String key);
+    }
+
+    /** Parser context key for the placeholder resolver that is applied when a parsed node is rendered. */
+    private static final ParserContext.Key<Function<String, Component>> RESOLVER_KEY =
+        ParserContext.Key.of("minecord:placeholder_resolver");
     /** The placeholder node parser. */
-    public static final NodeParser NODE_PARSER = NodeParser.merge(
-        TextParserV1.DEFAULT,
-        PatternPlaceholderParser.of(
-            PLACEHOLDER_PATTERN, PlaceholderContext.KEY, Placeholders.DEFAULT_PLACEHOLDER_GETTER
-        )
-    );
+    public static final NodeParser NODE_PARSER = NodeParser.builder()
+        .quickText()
+        .placeholders(TagLikeParser.Format.of('%', '%'), RESOLVER_KEY)
+        .build();
 
     private PlaceholdersExt() {}
 
@@ -52,13 +74,13 @@ public final class PlaceholdersExt
      *
      * @return Minecraft server placeholder context if present
      */
-    public static @Nullable PlaceholderContext getMinecordServerContext()
+    public static @Nullable ServerPlaceholderContext getMinecordServerContext()
     {
-        return Minecord.getInstance().getMinecraft().map(PlaceholderContext::of).orElse(null);
+        return Minecord.getInstance().getMinecraft().map(ServerPlaceholderContext::of).orElse(null);
     }
 
     /*
-     * Text-output placeholder parsers.
+     * Component-output placeholder parsers.
      */
 
     /**
@@ -69,9 +91,9 @@ public final class PlaceholdersExt
      * @param placeholders mapping of placeholder key-value pairs
      * @return formatted Minecraft text
      */
-    public static Text parseText(
+    public static Component parseText(
         @NotNull TextNode node,
-        @Nullable PlaceholderContext context,
+        @Nullable ServerPlaceholderContext context,
         @NotNull Map<String, PlaceholderHandler> placeholders
     )
     {
@@ -86,15 +108,45 @@ public final class PlaceholdersExt
      * @param placeholderGetter function that takes placeholder key and returns value
      * @return formatted Minecraft text
      */
-    public static Text parseText(
+    public static Component parseText(
         @NotNull TextNode node,
-        @Nullable PlaceholderContext context,
+        @Nullable ServerPlaceholderContext context,
         @NotNull PlaceholderGetter placeholderGetter
     )
     {
-        return context != null
-            ? Placeholders.parseText(node, context, PLACEHOLDER_PATTERN, placeholderGetter)
-            : Placeholders.parseNodes(node, PLACEHOLDER_PATTERN, placeholderGetter).toText(ParserContext.of(), true);
+        final ParserContext parserContext = context != null ? context.asParserContext() : ParserContext.of();
+        return node.toComponent(
+            parserContext.with(RESOLVER_KEY, raw -> resolve(raw, context, placeholderGetter)), true
+        );
+    }
+
+    /**
+     * Resolves a raw placeholder (e.g. {@code key} or {@code key argument}) using local, then global placeholders.
+     *
+     * @param raw raw placeholder text between the delimiters
+     * @param context placeholder context
+     * @param getter local placeholder getter
+     * @return resolved text, or the unresolved placeholder if unknown
+     */
+    private static Component resolve(
+        final String raw,
+        final @Nullable ServerPlaceholderContext context,
+        final PlaceholderGetter getter
+    )
+    {
+        final int split = raw.indexOf(' ');
+        final String key = split < 0 ? raw : raw.substring(0, split);
+        final String arg = split < 0 ? null : raw.substring(split + 1);
+
+        PlaceholderResult result = null;
+        final PlaceholderHandler handler = getter.get(key);
+        if (handler != null) {
+            result = handler.onPlaceholderRequest(context, arg);
+        } else if (context != null) {
+            final Identifier id = Identifier.tryParse(key);
+            if (id != null) result = Placeholders.parseServerPlaceholder(id, arg, context);
+        }
+        return result != null && result.isValid() ? result.component() : Component.literal("%" + raw + "%");
     }
 
     /**
@@ -103,9 +155,9 @@ public final class PlaceholdersExt
      * @param text placeholder template text
      * @return parsed placeholder text node
      */
-    public static @NotNull TextNode parseNode(@Nullable Text text)
+    public static @NotNull TextNode parseNode(@Nullable Component text)
     {
-        return text != null ? new ParentNode(NODE_PARSER.parseNodes(TextNode.convert(text))) : EmptyNode.INSTANCE;
+        return text != null ? TextNode.wrap(NODE_PARSER.parseNodes(TextNode.convert(text))) : TextNode.empty();
     }
 
     /*
@@ -122,7 +174,7 @@ public final class PlaceholdersExt
      */
     public static String parseString(
         @NotNull String string,
-        @Nullable PlaceholderContext context,
+        @Nullable ServerPlaceholderContext context,
         @NotNull Map<String, PlaceholderHandler> placeholders
     )
     {
@@ -139,7 +191,7 @@ public final class PlaceholdersExt
      */
     public static String parseString(
         @NotNull String string,
-        @Nullable PlaceholderContext context,
+        @Nullable ServerPlaceholderContext context,
         @NotNull PlaceholderGetter placeholderGetter
     )
     {
@@ -156,7 +208,7 @@ public final class PlaceholdersExt
      */
     public static String parseString(
         @NotNull TextNode node,
-        @Nullable PlaceholderContext context,
+        @Nullable ServerPlaceholderContext context,
         @NotNull Map<String, PlaceholderHandler> placeholders
     )
     {
@@ -173,7 +225,7 @@ public final class PlaceholdersExt
      */
     public static String parseString(
         @NotNull TextNode node,
-        @Nullable PlaceholderContext context,
+        @Nullable ServerPlaceholderContext context,
         @NotNull PlaceholderGetter placeholderGetter
     )
     {
@@ -188,7 +240,7 @@ public final class PlaceholdersExt
      */
     public static @NotNull TextNode parseNode(@Nullable String string)
     {
-        return string != null && !string.isEmpty() ? NODE_PARSER.parseNode(string) : EmptyNode.INSTANCE;
+        return string != null && !string.isEmpty() ? NODE_PARSER.parseNode(string) : TextNode.empty();
     }
 
     /*
@@ -207,25 +259,25 @@ public final class PlaceholdersExt
     }
 
     /**
-     * Returns a {@link Text} placeholder handler.
+     * Returns a {@link Component} placeholder handler.
      *
      * @param text Minecraft text
      * @return text placeholder handler
      */
-    public static PlaceholderHandler text(final Text text)
+    public static PlaceholderHandler text(final Component text)
     {
         return (ctx, arg) -> PlaceholderResult.value(text);
     }
 
     /**
-     * Returns a {@link Text} markdown placeholder handler.
+     * Returns a {@link Component} markdown placeholder handler.
      *
      * @param markdown markdown string
      * @return markdown placeholder handler
      */
     public static PlaceholderHandler markdown(final String markdown)
     {
-        final Text markdownText = MarkdownLiteParserV1.ALL.parseText(markdown, ParserContext.of());
+        final Component markdownText = MarkdownLiteParserV1.ALL.parseComponent(markdown, ParserContext.of());
         return (ctx, arg) -> PlaceholderResult.value(markdownText);
     }
 

@@ -3,8 +3,7 @@ package me.axieum.mcmod.minecord.impl.chat.callback.discord;
 import java.util.HashMap;
 import java.util.Map;
 
-import eu.pb4.placeholders.api.PlaceholderContext;
-import eu.pb4.placeholders.api.PlaceholderHandler;
+import eu.pb4.placeholders.api.ServerPlaceholderContext;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.sticker.StickerItem;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
@@ -12,6 +11,7 @@ import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import org.jetbrains.annotations.Nullable;
 
 import me.axieum.mcmod.minecord.api.util.PlaceholdersExt;
+import me.axieum.mcmod.minecord.api.util.PlaceholdersExt.PlaceholderHandler;
 import me.axieum.mcmod.minecord.api.util.StringUtils;
 import me.axieum.mcmod.minecord.impl.chat.util.MinecraftDispatcher;
 import static me.axieum.mcmod.minecord.api.util.PlaceholdersExt.markdown;
@@ -57,7 +57,7 @@ public class MessageReceivedListener extends ListenerAdapter
          * Prepare the message placeholders.
          */
 
-        final @Nullable PlaceholderContext ctx = PlaceholdersExt.getMinecordServerContext();
+        final @Nullable ServerPlaceholderContext ctx = PlaceholdersExt.getMinecordServerContext();
         final Map<String, PlaceholderHandler> placeholders = new HashMap<>(Map.of(
             // The author's tag (i.e. username#discriminator), e.g. Axieum#1001
             "tag", string(event.getAuthor().getName()),
@@ -135,7 +135,7 @@ public class MessageReceivedListener extends ListenerAdapter
          * Prepare the message placeholders.
          */
 
-        final @Nullable PlaceholderContext ctx = PlaceholdersExt.getMinecordServerContext();
+        final @Nullable ServerPlaceholderContext ctx = PlaceholdersExt.getMinecordServerContext();
         final Map<String, PlaceholderHandler> placeholders = Map.of(
             // The author's tag (i.e. username#discriminator), e.g. Axieum#1001
             "tag", string(event.getAuthor().getName()),
@@ -178,7 +178,7 @@ public class MessageReceivedListener extends ListenerAdapter
          * Prepare the message placeholders.
          */
 
-        final @Nullable PlaceholderContext ctx = PlaceholdersExt.getMinecordServerContext();
+        final @Nullable ServerPlaceholderContext ctx = PlaceholdersExt.getMinecordServerContext();
         final Map<String, PlaceholderHandler> placeholders = Map.of(
             // The author's tag (i.e. username#discriminator), e.g. Axieum#1001
             "tag", string(event.getAuthor().getName()),

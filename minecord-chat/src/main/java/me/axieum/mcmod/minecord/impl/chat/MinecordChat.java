@@ -6,7 +6,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import net.fabricmc.api.DedicatedServerModInitializer;
-import net.fabricmc.fabric.api.entity.event.v1.ServerEntityWorldChangeEvents;
+import net.fabricmc.fabric.api.entity.event.v1.ServerEntityLevelChangeEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.message.v1.ServerMessageEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
@@ -97,7 +97,7 @@ public final class MinecordChat implements MinecordAddon, DedicatedServerModInit
         // A player unlocked an advancement
         GrantCriterionCallback.EVENT.register(new PlayerAdvancementCallback());
         // A player teleported to another dimension
-        ServerEntityWorldChangeEvents.AFTER_PLAYER_CHANGE_WORLD.register(new PlayerChangeWorldCallback());
+        ServerEntityLevelChangeEvents.AFTER_PLAYER_CHANGE_LEVEL.register(new PlayerChangeWorldCallback());
         // A player died
         EntityDeathEvents.PLAYER.register(new PlayerDeathCallback());
 

@@ -5,7 +5,7 @@ plugins {
     id 'com.modrinth.minotaur' version '2.8.10'
     id 'io.github.themrmilchmann.curseforge-publish' version '0.9.0'
     id 'com.gradleup.shadow' version '9.3.1'
-    id 'fabric-loom' version '1.14-SNAPSHOT'
+    id 'net.fabricmc.fabric-loom' version '1.19.3'
 }
 
 allprojects {
@@ -13,24 +13,23 @@ allprojects {
     apply plugin: 'checkstyle'
     apply plugin: 'maven-publish'
     apply plugin: 'com.gradleup.shadow'
-    apply plugin: 'fabric-loom'
+    apply plugin: 'net.fabricmc.fabric-loom'
 
     group = project.maven_group
     version = project.mod_version
     base { archivesName = project.mod_id }
 
-    java { sourceCompatibility = targetCompatibility = JavaVersion.VERSION_21 }
+    java { sourceCompatibility = targetCompatibility = JavaVersion.VERSION_25 }
 
     // Declare dependencies
     configurations { shade }
     dependencies {
         // Fabric
         minecraft "com.mojang:minecraft:${project.minecraft_version}"
-        mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
-        modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+        implementation "net.fabricmc:fabric-loader:${project.loader_version}"
 
         // Mods
-        modRuntimeOnly "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+        implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 
         // Code Quality
         compileOnly "org.jetbrains:annotations:${project.jetbrains_annotations_version}"
@@ -50,15 +49,24 @@ allprojects {
         withJavadocJar()
     }
 
-    // Produce a fat-jar of all shaded dependencies
+    // Produce a fat-jar of all shaded dependencies (relocated where configured)
     shadowJar {
         configurations = [project.configurations.shade]
         destinationDirectory.set(layout.buildDirectory.dir('devlibs'))
+        // Loader loads logging libraries (including Gson) before discovering mods.
+        // Bundling them hides other mods' metadata; use Minecraft's libraries instead.
+        dependencies {
+            exclude(dependency('org.slf4j:.*'))
+            exclude(dependency('org.apache.logging.log4j:.*'))
+            exclude(dependency('com.google.code.gson:gson'))
+        }
     }
 
-    remapJar {
+    // Fold the fat-jar into the jar, which also carries the jar-in-jar includes
+    jar {
         dependsOn tasks.shadowJar
-        inputFile.set(tasks.shadowJar.archiveFile)
+        from { zipTree(tasks.shadowJar.archiveFile) }
+        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     }
 
     // Add the licence to all distributions
@@ -139,7 +147,6 @@ allprojects {
                         'mod_id': project.mod_id,
                         'minecraft_version': project.minecraft_version,
                         'loader_version': project.loader_version,
-                        'yarn_mappings': project.yarn_mappings,
                     ]
                 }
             }
@@ -163,7 +170,7 @@ allprojects {
 // Nest all subproject artifacts within the main/bundle distribution
 dependencies {
     subprojects.each {
-        implementation project(path: ":${it.name}", configuration: 'namedElements')
+        implementation project(":${it.name}")
         implementation project(path: ":${it.name}", configuration: 'shade')
         include project("${it.name}:")
     }
@@ -205,7 +212,7 @@ curseforge {
                 }
 
                 register('sources') {
-                    from(tasks.named('remapSourcesJar'))
+                    from(tasks.named('sourcesJar'))
                     displayName.set("${project.mod_name} v${project.version} (Sources)")
                 }
 
@@ -216,10 +223,10 @@ curseforge {
 
                 subprojects.each {
                     register("${it.name}Main") {
-                        from(it.tasks.named('remapJar'))
+                        from(it.tasks.named('jar'))
                     }
                     register("${it.name}Sources") {
-                        from(it.tasks.named('remapSourcesJar'))
+                        from(it.tasks.named('sourcesJar'))
                     }
                     register("${it.name}Javadocs") {
                         from(it.tasks.named('javadocJar'))
@@ -254,13 +261,13 @@ modrinth {
     // Add all supported game versions
     project.mr_game_versions.split(', ').each { gameVersions.add it }
     // Add the main artifact
-    uploadFile = remapJar
+    uploadFile = jar
     // Add any additional artifacts
-    additionalFiles.add remapSourcesJar
+    additionalFiles.add sourcesJar
     // additionalFiles.add javadocJar
     subprojects.each {
-        additionalFiles.add it.remapJar
-        additionalFiles.add it.remapSourcesJar
+        additionalFiles.add it.jar
+        additionalFiles.add it.sourcesJar
         // additionalFiles.add it.javadocJar
     }
     // Add any dependencies

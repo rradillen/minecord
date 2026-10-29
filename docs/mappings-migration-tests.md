@@ -122,7 +122,7 @@ Implemented cases:
    is mapping-unstable and creative-immunity-dependent, so the test drives `onDeath`
    directly — the very method `ServerPlayerEntityMixin` injects into.)
 4. **Advancement grant does not abort `grantCriterion`** — `advancementGrantFiresCallback`
-   grants the first available advancement criterion to a mock player and asserts both that
+   completes an unfinished single-criterion advancement for a mock player and asserts both that
    the grant took effect *and* that `GrantCriterionCallback` fired
    (`PlayerAdvancementTrackerMixin`).
 
@@ -137,12 +137,22 @@ Still deferred:
 ## Running
 
 ```
+./gradlew :runServer                                  # root/bundle development server
 ./gradlew test                                        # all modules — Layer 1 (fast, no game)
 ./gradlew :minecord-cmds:test :minecord-chat:test     # targeted Layer 1
 ./gradlew :minecord-chat:runGametest                  # Layer 3 — boots a headless server
 ```
 
+The development server generates `run/eula.txt` on its first launch and exits until
+you review and accept Minecraft's EULA there. Configure your Discord token locally
+before testing Discord connectivity; an empty token is reported as a login error.
+Use `:runServer` to select only the root task, rather than all modules' server tasks.
+
+Do not shade Gson, SLF4J or Log4j into the mod jars. Minecraft provides these libraries,
+and Fabric Loader loads them before mod discovery. A mod jar containing their marker
+classes can be loaded early and hide the rest of the classpath's `fabric.mod.json`
+resources, producing the misleading error that `fabricloader` is missing.
+
 Layer 1 must stay green throughout the migration; a red Layer 1 means behaviour changed,
 not just names. A red Layer 3 (including a server that refuses to boot) means a mixin
 injection no longer resolves — exactly the silent breakage a mappings migration risks.
-

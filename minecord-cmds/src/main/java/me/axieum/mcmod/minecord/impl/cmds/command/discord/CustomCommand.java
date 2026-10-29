@@ -11,8 +11,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
-import eu.pb4.placeholders.api.PlaceholderContext;
-import eu.pb4.placeholders.api.PlaceholderHandler;
+import eu.pb4.placeholders.api.ServerPlaceholderContext;
 import eu.pb4.placeholders.api.node.EmptyNode;
 import eu.pb4.placeholders.api.node.TextNode;
 import net.dv8tion.jda.api.EmbedBuilder;
@@ -29,22 +28,23 @@ import com.mojang.brigadier.context.ParsedCommandNode;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.tree.ArgumentCommandNode;
 
-import net.minecraft.command.argument.EntityArgumentType;
-import net.minecraft.command.argument.GameProfileArgumentType;
-import net.minecraft.command.permission.LeveledPermissionPredicate;
+import net.minecraft.commands.CommandSource;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.arguments.EntityArgument;
+import net.minecraft.commands.arguments.GameProfileArgument;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.PlayerConfigEntry;
-import net.minecraft.server.command.CommandOutput;
-import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.text.Text;
-import net.minecraft.util.math.Vec2f;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.rule.GameRules;
+import net.minecraft.server.permissions.LevelBasedPermissionSet;
+import net.minecraft.server.players.NameAndId;
+import net.minecraft.world.level.gamerules.GameRules;
+import net.minecraft.world.phys.Vec2;
+import net.minecraft.world.phys.Vec3;
 
 import me.axieum.mcmod.minecord.api.Minecord;
 import me.axieum.mcmod.minecord.api.cmds.command.MinecordCommand;
 import me.axieum.mcmod.minecord.api.cmds.event.MinecordCommandEvents;
 import me.axieum.mcmod.minecord.api.util.PlaceholdersExt;
+import me.axieum.mcmod.minecord.api.util.PlaceholdersExt.PlaceholderHandler;
 import me.axieum.mcmod.minecord.impl.cmds.config.CommandConfig;
 import static me.axieum.mcmod.minecord.api.util.PlaceholdersExt.string;
 import static me.axieum.mcmod.minecord.impl.cmds.MinecordCommandsImpl.LOGGER;
@@ -109,15 +109,15 @@ public class CustomCommand extends MinecordCommand
             ? event.getMember().getEffectiveName()
             : event.getUser().getName();
         final DiscordCommandOutput output = new DiscordCommandOutput(event, server, mcCommand);
-        final ServerCommandSource origSource = new ServerCommandSource(
+        final CommandSourceStack origSource = new CommandSourceStack(
             output, // command output
-            Vec3d.ZERO, Vec2f.ZERO, server.getOverworld(), // location & world
-            LeveledPermissionPredicate.OWNERS, tag, Text.literal(username), // permission & display name
-            server, null // server & entity
+            Vec3.ZERO, Vec2.ZERO, server.overworld(), // location & world
+            LevelBasedPermissionSet.OWNER, Component.literal(username), // permission & display name
+            server // server
         );
 
         // Fire an event to allow the command source to be mutated
-        final ServerCommandSource source = MinecordCommandEvents.Custom.BEFORE_EXECUTE.invoker().onBeforeCustomCommand(
+        final CommandSourceStack source = MinecordCommandEvents.Custom.BEFORE_EXECUTE.invoker().onBeforeCustomCommand(
             this, event, server, mcCommand, origSource
         );
 
@@ -129,14 +129,14 @@ public class CustomCommand extends MinecordCommand
             LOGGER.info("@{} is running '/{}'", tag, mcCommand);
 
             // Parse the command and build its context
-            final ParseResults<ServerCommandSource> parseResults = server.getCommandManager().getDispatcher().parse(
+            final ParseResults<CommandSourceStack> parseResults = server.getCommands().getDispatcher().parse(
                 mcCommand,
-                source.withReturnValueConsumer((bl, i) -> {
+                source.withCallback((bl, i) -> {
                     success.set(bl); // if unsuccessful, it may choose to raise a command syntax exception
                     result.set(i);
                 })
             );
-            final CommandContext<ServerCommandSource> context = parseResults.getContext().build(mcCommand);
+            final CommandContext<CommandSourceStack> context = parseResults.getContext().build(mcCommand);
 
             // Analyse the command context for a player's UUID to show their avatar on any command feedback
             findPlayerUuids(context.getLastChild()).findFirst()
@@ -144,7 +144,7 @@ public class CustomCommand extends MinecordCommand
                 .ifPresent(url -> output.thumbnailUrl = url);
 
             // Execute the command
-            server.getCommandManager().getDispatcher().execute(parseResults);
+            server.getCommands().getDispatcher().execute(parseResults);
         } catch (CommandSyntaxException e) {
             error = e;
         } finally {
@@ -163,14 +163,14 @@ public class CustomCommand extends MinecordCommand
         if (output.prevMessage == null) {
             if (error == null) {
                 output.thumbnailUrl = null;
-                source.sendFeedback(
+                source.sendSuccess(
                     () -> PlaceholdersExt.parseText(
-                        getConfig().messages.feedbackNode, PlaceholderContext.of(source), Collections.emptyMap()
+                        getConfig().messages.feedbackNode, ServerPlaceholderContext.of(source), Collections.emptyMap()
                     ),
                     false
                 );
             } else {
-                source.sendError(Text.literal(error.getMessage()));
+                source.sendFailure(Component.literal(error.getMessage()));
             }
         }
     }
@@ -195,7 +195,7 @@ public class CustomCommand extends MinecordCommand
         options.forEach(option -> values.put(option.getName(), option.getAsString()));
 
         // Delegate to the mapping-agnostic core, deriving placeholder context from the server if present
-        return prepareCommand(command, values, server != null ? PlaceholderContext.of(server) : null);
+        return prepareCommand(command, values, server != null ? ServerPlaceholderContext.of(server) : null);
     }
 
     /**
@@ -215,7 +215,7 @@ public class CustomCommand extends MinecordCommand
     static String prepareCommand(
         @NotNull TextNode command,
         @NotNull Map<String, String> options,
-        @Nullable PlaceholderContext ctx
+        @Nullable ServerPlaceholderContext ctx
     )
     {
         if (command == EmptyNode.INSTANCE) return "";
@@ -253,7 +253,7 @@ public class CustomCommand extends MinecordCommand
      * @param context Minecraft command context
      * @return a stream of Minecraft player UUIDs if present
      */
-    private static Stream<String> findPlayerUuids(CommandContext<ServerCommandSource> context)
+    private static Stream<String> findPlayerUuids(CommandContext<CommandSourceStack> context)
     {
         return context
             .getNodes()
@@ -263,12 +263,12 @@ public class CustomCommand extends MinecordCommand
             .map(node -> (ArgumentCommandNode<?, ?>) node)
             .map(node -> {
                 try {
-                    if (node.getType() instanceof EntityArgumentType) {
+                    if (node.getType() instanceof EntityArgument) {
                         // Entity
-                        return EntityArgumentType.getPlayer(context, node.getName()).getUuidAsString();
-                    } else if (node.getType() instanceof GameProfileArgumentType) {
+                        return EntityArgument.getPlayer(context, node.getName()).getStringUUID();
+                    } else if (node.getType() instanceof GameProfileArgument) {
                         // Game Profile
-                        Collection<PlayerConfigEntry> c = GameProfileArgumentType.getProfileArgument(
+                        Collection<NameAndId> c = GameProfileArgument.getGameProfiles(
                             context, node.getName()
                         );
                         return c.size() == 1 ? c.iterator().next().id().toString() : null;
@@ -282,7 +282,7 @@ public class CustomCommand extends MinecordCommand
     /**
      * A virtual Minecraft command output for use via Discord.
      */
-    private final class DiscordCommandOutput implements CommandOutput
+    private final class DiscordCommandOutput implements CommandSource
     {
         private final SlashCommandInteractionEvent event;
         private final MinecraftServer server;
@@ -306,7 +306,7 @@ public class CustomCommand extends MinecordCommand
         }
 
         @Override
-        public void sendMessage(Text message)
+        public void sendSystemMessage(Component message)
         {
             // Build an initial embed for the command feedback
             final String text = prevMessage != null ? prevMessage + '\n' + message.getString() : message.getString();
@@ -337,22 +337,22 @@ public class CustomCommand extends MinecordCommand
         }
 
         @Override
-        public boolean shouldReceiveFeedback()
+        public boolean acceptsSuccess()
         {
             return true;
         }
 
         @Override
-        public boolean shouldTrackOutput()
+        public boolean acceptsFailure()
         {
-            // This method appears to only be called during 'ServerCommandSource#sendError'
+            // This method appears to only be called during 'CommandSourceStack#sendError'
             return erroneous = true;
         }
 
         @Override
-        public boolean shouldBroadcastConsoleToOps()
+        public boolean shouldInformAdmins()
         {
-            return server.getOverworld().getGameRules().getValue(GameRules.COMMAND_BLOCK_OUTPUT);
+            return server.overworld().getGameRules().get(GameRules.COMMAND_BLOCK_OUTPUT);
         }
     }
 }

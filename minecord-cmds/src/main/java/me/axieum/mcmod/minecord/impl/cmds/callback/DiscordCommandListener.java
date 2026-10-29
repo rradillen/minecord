@@ -4,7 +4,7 @@ import java.time.Duration;
 import java.util.Collections;
 import java.util.Map;
 
-import eu.pb4.placeholders.api.PlaceholderContext;
+import eu.pb4.placeholders.api.ServerPlaceholderContext;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.session.ReadyEvent;
@@ -53,12 +53,12 @@ public class DiscordCommandListener extends ListenerAdapter
 
             // Fetch the Minecraft server instance
             final @Nullable MinecraftServer server = Minecord.getInstance().getMinecraft().orElse(null);
-            final @Nullable PlaceholderContext pCtx = server != null ? PlaceholderContext.of(server) : null;
+            final @Nullable ServerPlaceholderContext pCtx = server != null ? ServerPlaceholderContext.of(server) : null;
 
             // Attempt to run the command
             try {
                 // Check whether Minecraft is required, and hence whether the server has started
-                if (command.requiresMinecraft() && (server == null || server.getAverageTickTime() == 0)) {
+                if (command.requiresMinecraft() && (server == null || server.getAverageTickTimeNanos() == 0)) {
                     LOGGER.warn("@{} used '{}' but the server is not yet ready!", username, raw);
                     event.getHook().sendMessageEmbeds(
                         new EmbedBuilder().setColor(0xff8800).setDescription(

@@ -8,8 +8,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.TimerTask;
 
-import eu.pb4.placeholders.api.PlaceholderContext;
-import eu.pb4.placeholders.api.PlaceholderHandler;
+import eu.pb4.placeholders.api.ServerPlaceholderContext;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.OnlineStatus;
 import net.dv8tion.jda.api.entities.Activity;
@@ -21,6 +20,7 @@ import me.axieum.mcmod.minecord.api.Minecord;
 import me.axieum.mcmod.minecord.api.presence.category.PresenceCategory;
 import me.axieum.mcmod.minecord.api.presence.category.PresenceSupplier;
 import me.axieum.mcmod.minecord.api.util.PlaceholdersExt;
+import me.axieum.mcmod.minecord.api.util.PlaceholdersExt.PlaceholderHandler;
 import static me.axieum.mcmod.minecord.api.util.PlaceholdersExt.duration;
 import static me.axieum.mcmod.minecord.impl.presence.MinecordPresenceImpl.LOGGER;
 
@@ -56,7 +56,8 @@ public class PresenceUpdateTask extends TimerTask
              * Prepare the message placeholders.
              */
 
-            final Optional<PlaceholderContext> ctx = Minecord.getInstance().getMinecraft().map(PlaceholderContext::of);
+            final Optional<ServerPlaceholderContext> ctx =
+                Minecord.getInstance().getMinecraft().map(ServerPlaceholderContext::of);
             final Map<String, PlaceholderHandler> placeholders = Map.of(
                 // The total process uptime (to the nearest minute)
                 "uptime", duration(() ->

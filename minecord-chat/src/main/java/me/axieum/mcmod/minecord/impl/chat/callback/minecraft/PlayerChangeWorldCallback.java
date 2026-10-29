@@ -2,17 +2,17 @@ package me.axieum.mcmod.minecord.impl.chat.callback.minecraft;
 
 import java.util.Map;
 
-import eu.pb4.placeholders.api.PlaceholderContext;
-import eu.pb4.placeholders.api.PlaceholderHandler;
+import eu.pb4.placeholders.api.ServerPlaceholderContext;
 
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 
-import net.fabricmc.fabric.api.entity.event.v1.ServerEntityWorldChangeEvents;
+import net.fabricmc.fabric.api.entity.event.v1.ServerEntityLevelChangeEvents;
 
 import me.axieum.mcmod.minecord.api.Minecord;
 import me.axieum.mcmod.minecord.api.util.PlaceholdersExt;
+import me.axieum.mcmod.minecord.api.util.PlaceholdersExt.PlaceholderHandler;
 import me.axieum.mcmod.minecord.api.util.StringUtils;
 import me.axieum.mcmod.minecord.impl.chat.util.DiscordDispatcher;
 import me.axieum.mcmod.minecord.mixin.chat.LivingEntityAccessor;
@@ -21,10 +21,10 @@ import static me.axieum.mcmod.minecord.api.util.PlaceholdersExt.string;
 /**
  * A listener for when a Minecraft player changes world.
  */
-public class PlayerChangeWorldCallback implements ServerEntityWorldChangeEvents.AfterPlayerChange
+public class PlayerChangeWorldCallback implements ServerEntityLevelChangeEvents.AfterPlayerChange
 {
     @Override
-    public void afterChangeWorld(ServerPlayerEntity player, ServerWorld origin, ServerWorld dest)
+    public void afterChangeLevel(ServerPlayer player, ServerLevel origin, ServerLevel dest)
     {
         Minecord.getInstance().getJDA().ifPresent(jda -> {
             final BlockPos lastBlockPos = ((LivingEntityAccessor) player).getLastBlockPos();
@@ -34,7 +34,7 @@ public class PlayerChangeWorldCallback implements ServerEntityWorldChangeEvents.
              * Prepare the message placeholders.
              */
 
-            final PlaceholderContext ctx = PlaceholderContext.of(player);
+            final ServerPlaceholderContext ctx = ServerPlaceholderContext.of(player);
             final Map<String, PlaceholderHandler> placeholders = Map.of(
                 // The name of the world the player entered
                 "world", string(StringUtils.getWorldName(dest)),
@@ -63,7 +63,7 @@ public class PlayerChangeWorldCallback implements ServerEntityWorldChangeEvents.
                     PlaceholdersExt.parseString(entry.discord.teleportNode, ctx, placeholders)
                 ),
                 entry -> entry.discord.teleport != null && entry.hasWorld(dest),
-                player.getUuidAsString()
+                player.getStringUUID()
             );
         });
     }
