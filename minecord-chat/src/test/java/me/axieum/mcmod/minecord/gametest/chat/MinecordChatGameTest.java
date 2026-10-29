@@ -135,8 +135,8 @@ public class MinecordChatGameTest
     /**
      * Granting an advancement criterion must fire {@link GrantCriterionCallback} (the {@code @Inject}
      * into {@code PlayerAdvancementTracker.grantCriterion} in {@code PlayerAdvancementTrackerMixin})
-     * and the grant itself must still take effect. Any advancement with at least one criterion is
-     * used so the test does not hard-code criterion names.
+     * and the grant itself must still take effect. The callback runs when the advancement completes,
+     * so use an unfinished advancement with a single criterion.
      *
      * @param context game test context
      */
@@ -146,18 +146,17 @@ public class MinecordChatGameTest
         final MinecraftServer server = context.getLevel().getServer();
         final ServerPlayer player = context.makeMockServerPlayerInLevel();
 
-        // Find any advancement that exposes at least one criterion to grant
         AdvancementHolder advancement = null;
         String criterion = null;
         for (AdvancementHolder entry : server.getAdvancements().getAllAdvancements()) {
             final Map<String, Criterion<?>> criteria = entry.value().criteria();
-            if (!criteria.isEmpty()) {
+            if (criteria.size() == 1 && !player.getAdvancements().getOrStartProgress(entry).isDone()) {
                 advancement = entry;
                 criterion = criteria.keySet().iterator().next();
                 break;
             }
         }
-        context.assertTrue(advancement != null, "No advancement with a criterion was available to grant");
+        context.assertTrue(advancement != null, "No unfinished single-criterion advancement was available");
 
         final String expectedCriterion = criterion;
         final AtomicBoolean fired = new AtomicBoolean(false);

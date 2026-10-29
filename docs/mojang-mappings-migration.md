@@ -1,7 +1,9 @@
 # Yarn → Mojang mappings migration inventory (Layer 2)
 
 > **Status:** the source migration to Minecraft 26.3 (Mojang names, Placeholder API 3.x) is
-> done and compiles, but mixins have not yet been verified on a running 26.3 server.
+> done. The build and all five headless server game tests pass on 26.3, exercising
+> `/tellraw`, animal death, player death and advancement completion callbacks.
+> Live Discord integration still needs testing with a configured token.
 
 Fabric Yarn mappings are frozen at Minecraft 1.21.11 and will not be published for
 newer Minecraft versions. Any upgrade past 1.21.11 therefore requires migrating the

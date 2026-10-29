@@ -53,6 +53,13 @@ allprojects {
     shadowJar {
         configurations = [project.configurations.shade]
         destinationDirectory.set(layout.buildDirectory.dir('devlibs'))
+        // Loader loads logging libraries (including Gson) before discovering mods.
+        // Bundling them hides other mods' metadata; use Minecraft's libraries instead.
+        dependencies {
+            exclude(dependency('org.slf4j:.*'))
+            exclude(dependency('org.apache.logging.log4j:.*'))
+            exclude(dependency('com.google.code.gson:gson'))
+        }
     }
 
     // Fold the fat-jar into the jar, which also carries the jar-in-jar includes
